@@ -1,0 +1,30 @@
+---
+title: "TITLE"
+subtitle: "Forecasts built from synthetic (LLM-generated) survey responses"
+author:
+  - AUTHOR 1
+  - AUTHOR 2
+  - AUTHOR 3
+date: today
+date-format: long
+bibliography: references.bib
+jupyter: python3
+---
+
+# Forecast
+
+# Methods
+
+## Personas
+
+## Querying models
+
+## Post-stratification
+
+## Costs and timing
+
+# Uncertainty
+
+# Discussion
+
+# References

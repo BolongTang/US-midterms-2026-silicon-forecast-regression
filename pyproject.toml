@@ -1,0 +1,24 @@
+[project]
+name = "us-midterms-2026-silicon-forecast"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "great-tables>=1.1.0",
+    "httpx>=0.28.1",
+    "jupyter>=1.1.1",
+    "numpy>=2.5.4",
+    "plotnine>=0.15.8",
+    "polars>=2.1.0",
+    "pyarrow>=26.0.0",
+    "python-dotenv>=1.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "pandera[polars]>=0.35.0",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,20 @@
+project:
+  type: website
+  output-dir: ../docs
+  render:
+    - index.qmd
+
+website:
+  title: "TITLE"
+  page-footer:
+    center: "AUTHOR 1, AUTHOR 2, AUTHOR 3 · [Code and data on GitHub](https://github.com/OWNER/REPO)"
+
+format:
+  html:
+    theme: styles.scss
+    toc: true
+
+execute:
+  echo: false
+  warning: false
+  message: false
