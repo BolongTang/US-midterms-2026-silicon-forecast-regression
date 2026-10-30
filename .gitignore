@@ -17,4 +17,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
-*.feather
+
+# Large raw CES download (re-create with scripts/01-download_data.py)
+data/01-raw_data/cumulative_*
