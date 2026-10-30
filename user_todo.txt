@@ -22,6 +22,8 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
 [DO]  Run the real regression once the three inputs above exist:
       uv run scripts/05-regression.py --source real
       and tell Claude to review the metrics (data/02-analysis_data/regression_metrics.parquet).
+      Then in paper/regression.qmd change SOURCE = "simulated" to "real", run
+      uv run scripts/06-make_figures.py --source real and uv run quarto render paper.
 
 [DECIDE] Which 2026 feature source is primary: CES-only, or CES+ACS?
       (Both are computed. Pick after seeing real-data accuracy.)
@@ -46,9 +48,17 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
 [DECIDE] GitHub: the branch Regression is pushed to
       https://github.com/BolongTang/US-midterms-2026-silicon-forecast-regression
       (not to harryyz/..., whose connector access is still read-only). Origin in the
-      sandbox still points at harryyz. Open a PR there, or get write access to harryyz's
+      sandbox now points at that repo too. Open a PR there, or get write access to harryyz's
       repo and have Claude push to it? (Claude will not open a PR unless asked.)
+
+[DECIDE] paper/index.qmd (LLM forecast page) is still the course template with
+      placeholders (TITLE, AUTHOR 1...). Whose section is it, and should Claude fill it?
+
+[DO]  quarto warns about output-dir ../docs when rendering paper/ (project dir is paper/).
+      Harmless here; to silence it, move _quarto.yml to the repo root.
 
 Done so far (for reference):
   - Regression pipeline, ACS downloader (with API-key slot), simulator, tests.
   - Pipeline runs on simulated data via --source simulated.
+  - Figures (scripts/06) and Quarto page (paper/regression.qmd, rendered to docs/).
+  - origin now points at BolongTang/US-midterms-2026-silicon-forecast-regression.

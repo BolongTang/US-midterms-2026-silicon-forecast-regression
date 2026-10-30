@@ -1,0 +1,169 @@
+---
+title: "2026 Senate: a state-level regression forecast"
+subtitle: "Predicted Democratic, Republican and Undecided shares in all 35 races"
+author: Yi Zhi Zhang
+date: today
+date-format: long
+jupyter: python3
+---
+
+```{python}
+#| label: setup
+#| output: false
+import importlib.util
+from pathlib import Path
+import numpy as np
+import pandas as pd
+import polars as pl
+from IPython.display import HTML, Markdown, display
+
+# "simulated" runs on synthetic inputs (data/00-simulated_data). Switch to "real"
+# once the CES (2016-2024), ACS and certified-results files are downloaded.
+SOURCE = "simulated"
+
+spec = importlib.util.spec_from_file_location("figs", Path("..") / "scripts" / "06-make_figures.py")
+figs = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(figs)
+res = figs.load(SOURCE, root=Path(".."))
+plots = figs.all_figures(res)
+preds, metrics = res["preds"], res["metrics"]
+headline = "2022+2024"
+fs = res["oos_features"]
+head = figs.pick(preds, headline, fs)
+
+
+def table(df: pd.DataFrame, **fmt):
+    display(HTML(df.to_html(index=False, border=0, classes="table table-sm", float_format=lambda v: f"{v:.1f}")))
+
+
+def pct(s):
+    return (100 * s).round(1)
+```
+
+```{python}
+#| output: asis
+if SOURCE == "simulated":
+    print("""::: {.callout-warning}
+## Synthetic data
+Every number and figure on this page comes from **simulated** survey, census and
+election inputs with a known structure (`scripts/00b-simulate_regression_inputs.py`).
+They show that the pipeline works end to end. They say nothing about the real 2026
+races. Set `SOURCE = "real"` in this page's first code chunk once the real data are in place.
+:::""")
+```
+
+# Summary
+
+```{python}
+#| output: asis
+n_states = head["st"].nunique()
+ok = np.allclose(head[["p_dem", "p_rep", "p_und"]].sum(axis=1), 1.0)
+print(f"""- **Coverage:** {n_states} of 35 Senate races have a predicted Democratic, Republican and
+  Undecided share; the three shares sum to 100% in every state ({'checked' if ok else 'CHECK FAILED'}).
+- **Model:** ridge regression on log-ratios of the three shares, using state demographics and
+  party identification (features: `{fs}`), trained on {', '.join(sorted(preds['train'].unique().to_list()))}.
+- **Predicted winners (model trained on {headline}):** {int((head['winner'] == 'Democratic').sum())} Democratic,
+  {int((head['winner'] == 'Republican').sum())} Republican.
+- **Vote counts:** Senate seats are decided by statewide popular vote, so a state's vote share is
+  the right quantity to predict; there is no Electoral College.""")
+```
+
+# Forecast
+
+```{python}
+#| fig-cap: "Predicted Democratic share of the two-party vote, tile map of states."
+#| fig-alt: "Tile map of the United States coloured from red to blue by predicted Democratic two-party share in each 2026 Senate race."
+plots["forecast_map"].draw(show=True)
+```
+
+```{python}
+#| fig-cap: "Predicted Democratic, Republican and Undecided shares in every 2026 race."
+#| fig-alt: "Horizontal stacked bars, one per state, showing predicted Democratic, Undecided and Republican shares."
+plots["forecast_bars"].draw(show=True)
+```
+
+## Table of predictions
+
+Percentages for every race (model trained on `{python} headline`, features `{python} fs`).
+
+```{python}
+t = head.sort_values("st")[["st", "p_dem", "p_rep", "p_und", "dem2p", "winner"]].copy()
+for c in ["p_dem", "p_rep", "p_und", "dem2p"]:
+    t[c] = pct(t[c])
+t.columns = ["State", "Democratic %", "Republican %", "Undecided/other %", "Dem two-party %", "Predicted winner"]
+table(t)
+```
+
+# Does the training set matter?
+
+The three requested training sets are 2022 only, 2024 only, and both cycles together.
+
+```{python}
+#| fig-cap: "Predicted Democratic two-party share by state under each training set."
+#| fig-alt: "Dot plot of predicted Democratic two-party share per state, with a marker shape and colour for each training set."
+plots["model_comparison"].draw(show=True)
+```
+
+```{python}
+wide = (
+    preds.filter(pl.col("features") == fs, pl.col("train").is_in(["2022", "2024", "2022+2024"]))
+    .with_columns(dem2p=100 * pl.col("p_dem") / (pl.col("p_dem") + pl.col("p_rep")))
+    .pivot(on="train", index="st", values="dem2p").sort("st").to_pandas()
+)
+wide.columns = ["State"] + [f"Dem two-party %, trained on {c}" for c in wide.columns[1:]]
+table(wide)
+```
+
+# Accuracy
+
+Each state-race is predicted by a model that never saw that state (leave-one-state-out). Single-year models
+are also asked to predict the other cycles, and multi-year models are tested by holding out each cycle in
+turn. The baseline predicts every state with the training-set average share.
+
+```{python}
+#| fig-cap: "Out-of-sample predicted versus observed Democratic two-party share."
+#| fig-alt: "Scatter plot of predicted against observed Democratic two-party share, points close to the 45 degree line."
+plots["accuracy_scatter"].draw(show=True)
+```
+
+```{python}
+#| fig-cap: "Error of the model and of the mean-share baseline, by training set and test scheme."
+#| fig-alt: "Bar chart of mean absolute error in Democratic share by training set, with baseline error shown as diamonds well above the bars."
+plots["error_by_model"].draw(show=True)
+```
+
+```{python}
+m = metrics.select(
+    pl.col("features").alias("Features"), pl.col("train").alias("Trained on"), pl.col("scheme").alias("Test"),
+    pl.col("n").alias("Rows"), pl.col("mae_dem").alias("Dem MAE (pp)"), pl.col("mae_rep").alias("Rep MAE (pp)"),
+    pl.col("mae_und").alias("Undecided MAE (pp)"), pl.col("baseline_mae_dem").alias("Baseline Dem MAE (pp)"),
+    (100 * pl.col("winner_acc_ces")).alias("Winner correct vs survey (%)"),
+    (100 * pl.col("official_winner_acc")).alias("Winner correct vs results (%)"),
+).to_pandas()
+table(m)
+```
+
+# Method
+
+1. **Unit of analysis:** one row per state per election cycle.
+2. **Features:** survey-weighted state profile (share male, white, Black, Hispanic, college-educated,
+   mean age, Republican and Democratic party identification), ACS demographics when available,
+   and a midterm-year indicator.
+3. **Targets:** weighted Democratic, Republican and Undecided/other shares of Senate vote intent, which
+   sum to one. A multi-class regression is fit on additive log-ratios, so predictions stay positive
+   and sum to one.
+4. **Penalty:** ridge, chosen by leave-one-out cross-validation.
+5. **2026 features:** no 2026 survey exists, so the 2024 profiles are carried forward.
+
+Run the whole pipeline with `uv run scripts/05-regression.py` and rebuild the figures with
+`uv run scripts/06-make_figures.py`.
+
+# Caveats
+
+- Targets are survey *intent*, not votes; "Undecided" includes Not Sure, No One and third-party answers.
+- State profiles come from survey samples; small states have few respondents.
+- Party-identification features come from the same respondents as the targets.
+- No candidate information (incumbency, quality, spending) and no uncertainty intervals yet.
+- Independents who caucus with a party (e.g. Maine, Vermont) are coded by party label.
+
+The full list is in `caveats.txt` in the repository.

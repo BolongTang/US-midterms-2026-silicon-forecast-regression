@@ -1,4 +1,4 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30)
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (figures + site added))
 =====================================================================
 Goal: forecast every 2026 US Senate race (35 contests) with a state-level
 regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
@@ -24,12 +24,19 @@ Files
  scripts/01-download_data.py                CES 2016-2024 (2016-2020 -> ces_2016_2020.parquet)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
- tests/test_regression.py                   unit + simulated end-to-end + real-data tests
+ scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
+ paper/regression.qmd                       Quarto page on the regression forecast (SOURCE switch)
+ docs/                                      rendered site (quarto render paper)
+ tests/test_regression.py, test_figures.py unit + simulated end-to-end + real-data tests
  data/02-analysis_data/regression_*.parquet real-data outputs (CES features only so far)
  data/00-simulated_data/regression_*.parquet simulated-data outputs
  user_todo.txt / caveats.txt / summary.txt  tracking files (this one included)
 
 Status
+ - Every one of the 35 2026 races has D/R/Undecided percentages (sum to 100%) under every
+   training set, on simulated and on real 2022/2024 CES data.
+ - Figures and the Quarto page are built from SIMULATED data; flip SOURCE to "real" in
+   paper/regression.qmd (and run 06-make_figures.py --source real) when real inputs exist.
  - Pipeline runs end to end on simulated data (--source simulated) and on the real
    2022/2024 CES.
  - Real-data results so far (CES features only; targets are CES intent): Dem-share
@@ -41,4 +48,6 @@ Status
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)
  uv run scripts/05-regression.py --source simulated
- uv run pytest tests/test_regression.py
+ uv run scripts/06-make_figures.py --source simulated
+ uv run quarto render paper
+ uv run pytest tests/test_regression.py tests/test_figures.py

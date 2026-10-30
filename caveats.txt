@@ -35,6 +35,10 @@ SIMULATED DATA
     process. High accuracy there shows the code works; it says nothing about
     real 2026 accuracy. Do not quote simulated numbers as findings.
 
+SITE
+16. The Quarto page and figures currently show simulated results (banner on the page).
+    The tile map saturates colours beyond 20%/80% Dem two-party share.
+
 ENVIRONMENT
 15. Claude's sandbox blocks api.census.gov and dataverse.harvard.edu, so ACS and
     extra CES years are untested against the live sources. The ACS variable codes
