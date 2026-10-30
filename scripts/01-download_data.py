@@ -11,7 +11,7 @@
 #         doi:10.7910/DVN/II2DB6
 #
 # Outputs (in data/01-raw_data/):
-#   - ces_2014_2020.parquet: earlier cycles for the regression (committed)
+#   - ces_2012_2020.parquet: earlier cycles for the regression (committed)
 #   - the full cumulative file as downloaded (large, gitignored)
 #   - ces_2022_2024.parquet: 2022 and 2024 rows, selected columns (committed)
 #   - ces_2022_2024_sample.parquet: 2,000 rows so scripts run without the full file
@@ -31,7 +31,7 @@ RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 DATAVERSE = "https://dataverse.harvard.edu"
 CES_DOI = "doi:10.7910/DVN/II2DB6"
-YEARS = [2014, 2016, 2018, 2020, 2022, 2024]  # 2014-2020 feed the regression only
+YEARS = [2012, 2014, 2016, 2018, 2020, 2022, 2024]  # 2012-2020 feed the regression only (2012 only as lagged features)
 
 # Columns we keep. 2024 gives personas and the backtest answer key
 # (voted_sen_party); 2022 gives validated midterm turnout (vv_turnout_gvm).
@@ -163,8 +163,8 @@ ces = read_subset(path)
 # to their own file for the regression (scripts/05-regression.py).
 extra = ces.filter(pl.col("year") < 2022)
 if extra.height:
-    extra.write_parquet(RAW_DIR / "ces_2014_2020.parquet")
-    print(f"Saved {extra.height:,} rows to {RAW_DIR / 'ces_2014_2020.parquet'}")
+    extra.write_parquet(RAW_DIR / "ces_2012_2020.parquet")
+    print(f"Saved {extra.height:,} rows to {RAW_DIR / 'ces_2012_2020.parquet'}")
 ces = ces.filter(pl.col("year") >= 2022)
 
 ces.write_parquet(RAW_DIR / "ces_2022_2024.parquet")

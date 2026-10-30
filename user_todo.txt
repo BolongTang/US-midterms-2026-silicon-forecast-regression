@@ -55,7 +55,16 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
       'all' (six cycles) and 2022+2024; Claude's page still headlines 2022+2024 (your
       requested pair). Switch to 'all'?
 
+[DECIDE] Baselines match or beat the regression at calling winners (see summary.txt).
+      Add the last presidential and last Senate result as regression features
+      (both known before the election)? Claude recommends yes; say the word and it will
+      add a 'ces+prior' feature set, re-run, and compare.
+
+[DECIDE] Headline 2026 model: the forecast now uses models trained on LAGGED features
+      (honest). Keep 'all' or 2022+2024 as headline?  (see the earlier item)
+
 Done so far (for reference):
+  - Leakage audit + fixes, simple baselines, CES 2012 / ACS 2012 / presidential results.
   - Regression pipeline, ACS downloader (with API-key slot), simulator, tests.
   - Pipeline runs on simulated data via --source simulated.
   - Figures (scripts/06) and Quarto page (paper/regression.qmd, rendered to docs/).

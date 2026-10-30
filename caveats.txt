@@ -34,6 +34,18 @@ MODEL
     contest (CA 2016/2018, ME 2018, VT 2018/2024, ...) are dropped from the check.
 13. Predictions are point estimates; no uncertainty intervals yet.
 
+LEAKAGE AND BASELINES
+17. Residual: CES case_ids do not repeat across cycles in the cumulative file, so panel
+    overlap between survey waves cannot be checked. Panel respondents would make lagged
+    features correlated with later targets (not future information, but dependence).
+18. Forward-chaining test sets are small (about 30 races per cycle); winner accuracy
+    differences of 1-3 points (a few races) are within noise.
+19. 'last Senate result' is undefined for states with no earlier Senate race in the
+    data; baselines are compared only on rows where every method has a prediction.
+20. Leakage from same-year features was small and noisy in these data (about 0.7 pp for
+    the 'all' set; the reverse sign in some sets), so it is a risk control, not the
+    main driver of accuracy.
+
 SIMULATED DATA
 14. Simulated results (data/00-simulated_data/) come from a known generating
     process. High accuracy there shows the code works; it says nothing about

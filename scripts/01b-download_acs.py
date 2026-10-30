@@ -1,6 +1,6 @@
 #### Preamble ####
 # Purpose: Download state-level demographics from the Census Bureau ACS 5-year
-#          estimates for 2014-2024 election cycles (2024 is reused for the 2026 forecast).
+#          estimates for 2012-2024 (lagged features need the cycle two years earlier) (2024 is reused for the 2026 forecast).
 # Author: Yi Zhi Zhang
 # Date: 30 October 2026
 # Contact: yizhiharry.zhang@mail.utoronto.ca
@@ -27,7 +27,7 @@ load_dotenv()
 
 RAW_DIR = Path("data/01-raw_data")
 RAW_DIR.mkdir(parents=True, exist_ok=True)
-ACS_YEARS = [2014, 2016, 2018, 2020, 2022, 2024]  # 5-year ACS ending in these years
+ACS_YEARS = [2012, 2014, 2016, 2018, 2020, 2022, 2024]  # 5-year ACS ending in these years
 
 # Variable codes from tables B01001, B01002, B02001, B03003, B15003, B19013
 VARIABLES = {

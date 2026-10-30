@@ -27,13 +27,14 @@ spec.loader.exec_module(figs)
 res = figs.load(SOURCE, root=Path(".."))
 plots = figs.all_figures(res)
 preds, metrics = res["preds"], res["metrics"]
+metrics_lag = metrics.filter(pl.col("timing") == "lagged")  # the honest design; see the leakage audit
 headline = "2022+2024"
 fs = res["oos_features"]
 head = figs.pick(preds, headline, fs)
 
 
 def table(df: pd.DataFrame, **fmt):
-    display(HTML(df.to_html(index=False, border=0, classes="table table-sm", float_format=lambda v: f"{v:.1f}")))
+    display(HTML(df.to_html(index=False, border=0, classes="table table-sm", na_rep="–", float_format=lambda v: f"{v:.1f}")))
 
 
 def pct(s):
@@ -80,13 +81,13 @@ print(f"""- **Coverage:** {n_states} of 35 Senate races have a predicted Democra
 ```{python}
 #| fig-cap: "Predicted Democratic share of the two-party vote, tile map of states."
 #| fig-alt: "Tile map of the United States coloured from red to blue by predicted Democratic two-party share in each 2026 Senate race."
-plots["forecast_map"].draw(show=True)
+plots["forecast_map"]
 ```
 
 ```{python}
 #| fig-cap: "Predicted Democratic, Republican and Undecided shares in every 2026 race."
 #| fig-alt: "Horizontal stacked bars, one per state, showing predicted Democratic, Undecided and Republican shares."
-plots["forecast_bars"].draw(show=True)
+plots["forecast_bars"]
 ```
 
 ## Table of predictions
@@ -108,7 +109,7 @@ The three requested training sets are 2022 only, 2024 only, and both cycles toge
 ```{python}
 #| fig-cap: "Predicted Democratic two-party share by state under each training set."
 #| fig-alt: "Dot plot of predicted Democratic two-party share per state, with a marker shape and colour for each training set."
-plots["model_comparison"].draw(show=True)
+plots["model_comparison"]
 ```
 
 ```{python}
@@ -123,24 +124,29 @@ table(wide)
 
 # Accuracy
 
-Each state-race is predicted by a model that never saw that state (leave-one-state-out). Single-year models
-are also asked to predict the other cycles, and multi-year models are tested by holding out each cycle in
-turn. The baseline predicts every state with the training-set average share.
+Two tests are reported, both with features lagged by two years (the 2024 survey predicts 2026, so the 2022
+survey predicts 2024, and so on):
+
+- **Forward-chaining** is the honest forecast test: train on earlier cycles only, predict the next one.
+- **Leave-one-state-out** holds out a state but keeps the other states of the same election in training. It is
+  *optimistic*, because those states reveal that year's national swing; it is shown for comparison.
+
+The baseline predicts every state with the training-set average share, computed inside each training fold.
 
 ```{python}
 #| fig-cap: "Out-of-sample predicted versus observed Democratic two-party share."
 #| fig-alt: "Scatter plot of predicted against observed Democratic two-party share, points close to the 45 degree line."
-plots["accuracy_scatter"].draw(show=True)
+plots["accuracy_scatter"]
 ```
 
 ```{python}
 #| fig-cap: "Error of the model and of the mean-share baseline, by training set and test scheme."
 #| fig-alt: "Bar chart of mean absolute error in Democratic share by training set, with baseline error shown as diamonds well above the bars."
-plots["error_by_model"].draw(show=True)
+plots["error_by_model"]
 ```
 
 ```{python}
-m = metrics.select(
+m = metrics_lag.select(
     pl.col("features").alias("Features"), pl.col("train").alias("Trained on"), pl.col("scheme").alias("Test"),
     pl.col("n").alias("Rows"), pl.col("mae_dem").alias("Dem MAE (pp)"), pl.col("mae_rep").alias("Rep MAE (pp)"),
     pl.col("mae_und").alias("Undecided MAE (pp)"), pl.col("baseline_mae_dem").alias("Baseline Dem MAE (pp)"),
@@ -164,7 +170,7 @@ newer pair (`2022+2024`) and with every cycle together (`all`), all scored again
 
 ```{python}
 older = ["2014", "2016", "2018", "2014+2016+2018", "2022+2024", "all"]
-o = metrics.filter(pl.col("features") == fs, pl.col("train").is_in(older)).select(
+o = metrics_lag.filter(pl.col("features") == fs, pl.col("train").is_in(older)).select(
     pl.col("train").alias("Trained on"), pl.col("scheme").alias("Test"), pl.col("n").alias("Rows"),
     pl.col("mae_dem").alias("Dem MAE vs survey (pp)"), pl.col("official_mae_dem2p").alias("Dem two-party MAE vs results (pp)"),
     (100 * pl.col("official_winner_acc")).alias("Winner correct vs results (%)"),
@@ -184,10 +190,100 @@ display(Markdown("**2026 predictions: older cycles versus newer cycles versus al
 table(cmp)
 ```
 
+# Leakage audit
+
+A forecast may only use what was known before the election. I checked every step of the pipeline for
+information that would not have been available, and fixed what I found.
+
+```{python}
+#| output: asis
+leaks = [
+    ("Same-year features", "Features and targets came from the same survey year and the same respondents; for 2026 we only have 2024 data.", "Features are now **lagged two years** (cycle *y* uses the survey of *y - 2*); same-year tables are kept only to measure the leak."),
+    ("ACS vintage", "The ACS 5-year estimate for year *Y* is published after the year-*Y* election.", "Lagged with the other features, so only data published before the election are used."),
+    ("Same-cycle information", "Leave-one-state-out let other states' results from the same election (the national swing) inform the held-out state.", "Kept, labelled optimistic. The headline test is **forward-chaining** on earlier cycles."),
+    ("Time travel", "Leave-one-cycle-out and predict-other-years let later cycles train a model that scored earlier ones.", "Removed."),
+    ("Baseline fold", "The mean-share baseline was computed on all training rows, including the held-out state.", "Computed inside each fold."),
+    ("2026 forecast", "Models trained on same-year features were applied to two-year-old features.", "The forecast now uses models trained on lagged features."),
+]
+print("| Issue | What could leak | Fix |\n|---|---|---|")
+for a, b, c in leaks:
+    print(f"| {a} | {b} | {c} |")
+print("""
+Checked and clean: certified results are never used to fit a model (only to score it, or as a baseline's
+*earlier* result); ridge penalty and feature scaling are fit inside each training set; every baseline uses
+only results from years strictly before the target year. One residual: CES `case_id`s do not repeat across
+cycles in the cumulative file, so any panel overlap between survey waves cannot be checked.""")
+```
+
+How much did the leak flatter accuracy? The figure compares lagged (honest) with same-year (leaky) features.
+
+```{python}
+#| fig-cap: "Error against certified results for lagged versus same-year features."
+#| fig-alt: "Dot plot of error by training set and test scheme, with lagged and same-year features as two markers."
+plots["leakage_check"]
+```
+
+```{python}
+lk = (
+    metrics.filter(pl.col("features") == fs, pl.col("train").is_in(["2022+2024", "all"]))
+    .select(pl.col("train").alias("Trained on"), pl.col("scheme").alias("Test"), "timing", pl.col("official_mae_dem2p"))
+    .pivot(on="timing", index=["Trained on", "Test"], values="official_mae_dem2p").to_pandas()
+)
+lk["Leak flatters error by (pp)"] = lk["lagged"] - lk["contemporaneous"]
+lk = lk.rename(columns={"lagged": "Error, lagged (pp)", "contemporaneous": "Error, same-year (pp)"})
+table(lk)
+```
+
+# Simple baselines
+
+Before trusting a regression, compare it with predictions that need no fitting at all. Ideas considered:
+
+1. **Party-ID majority (pid3):** the party with more self-identified voters in the state wins.
+2. **Party-ID majority with leaners (pid7):** the same, but leaners count for their party.
+3. **Last Senate result:** the state's most recent certified Senate winner (persistence).
+4. **Last presidential result:** the state's most recent presidential winner.
+5. **Majority class:** every state goes to the party that won most earlier races.
+6. **Mean share:** every state gets the average two-party share of earlier races.
+
+All six use only information from before the target election, and are scored on exactly the same state-races
+as the regression (those where every method makes a prediction), against certified results.
+
+```{python}
+#| fig-cap: "Winner accuracy of the regression and the simple baselines on identical state-races."
+#| fig-alt: "Horizontal bars of the share of Senate winners called correctly, with the two regression bars in blue and the baselines in grey."
+plots["baselines"]
+```
+
+```{python}
+sm = res["summary"].to_pandas()
+sm["winner_acc"] = 100 * sm["winner_acc"]
+sm.columns = ["Method", "State-races", "Winners correct (%)", "Dem two-party MAE (pp)"]
+table(sm.sort_values("Winners correct (%)", ascending=False))
+```
+
+By test year (winners correct, %):
+
+```{python}
+by = res["by_year"].with_columns((100 * pl.col("winner_acc")).alias("acc")).pivot(on="test_year", index="method", values="acc").sort("method").to_pandas()
+table(by.rename(columns={"method": "Method"}))
+```
+
+```{python}
+#| output: asis
+best = res["summary"].sort("winner_acc", descending=True)
+ridge = res["summary"].filter(pl.col("method").str.starts_with("ridge")).sort("winner_acc", descending=True)
+b0, r0 = best.row(0, named=True), ridge.row(0, named=True)
+verdict = "beats" if r0["winner_acc"] > b0["winner_acc"] else "does not beat"
+print(f"""**Reading.** On identical rows the regression calls {100*r0['winner_acc']:.0f}% of winners correctly;
+the best baseline, *{b0['method'].replace('baseline: ', '')}*, calls {100*b0['winner_acc']:.0f}%. The regression
+{verdict} the best simple baseline at calling winners. Its value is the full three-way share forecast
+(including Undecided), which no baseline gives.""")
+```
+
 # Method
 
 1. **Unit of analysis:** one row per state per election cycle.
-2. **Features:** survey-weighted state profile (share male, white, Black, Hispanic, college-educated,
+2. **Features (lagged two years):** survey-weighted state profile (share male, white, Black, Hispanic, college-educated,
    mean age, Republican and Democratic party identification), ACS demographics when available,
    and a midterm-year indicator.
 3. **Targets:** weighted Democratic, Republican and Undecided/other shares of Senate vote intent, which

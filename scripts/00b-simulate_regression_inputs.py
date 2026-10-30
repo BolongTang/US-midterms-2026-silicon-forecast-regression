@@ -18,6 +18,7 @@
 #   - simulated_ces.parquet           respondents, same columns the regression uses
 #   - simulated_acs.parquet           state features by ACS year
 #   - simulated_senate_results.csv    year, st, dem_votes, rep_votes, other_votes
+#   - simulated_president_results.csv same columns, presidential years
 #
 # Run with: uv run scripts/00b-simulate_regression_inputs.py
 
@@ -28,7 +29,8 @@ import numpy as np
 import polars as pl
 
 OUT_DIR = Path("data/00-simulated_data")
-YEARS = [2014, 2016, 2018, 2020, 2022, 2024]
+YEARS = [2012, 2014, 2016, 2018, 2020, 2022, 2024]
+PRES_YEARS = [2012, 2016, 2020, 2024]
 N_PER_STATE = 300
 SEED = 853
 
@@ -39,7 +41,7 @@ STATES = [
     "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
 ]  # fmt: skip
 # National swing toward Democrats by year (logit scale)
-SWING = {2014: -0.3, 2016: -0.1, 2018: 0.3, 2020: 0.1, 2022: 0.1, 2024: -0.15}
+SWING = {2012: 0.2, 2014: -0.3, 2016: -0.1, 2018: 0.3, 2020: 0.1, 2022: 0.1, 2024: -0.15}
 
 
 def logistic(x):
@@ -64,7 +66,7 @@ def simulate(out_dir: Path = OUT_DIR, seed: int = SEED) -> None:
     # Which states have a Senate race each year (about 34 of 51)
     races = {y: set(rng.choice(STATES, 34, replace=False)) for y in YEARS}
 
-    resp, truth = [], []
+    resp, truth, pres = [], [], []
     case_id = 0
     for y in YEARS:
         for i, s in enumerate(STATES):
@@ -86,6 +88,11 @@ def simulate(out_dir: Path = OUT_DIR, seed: int = SEED) -> None:
             u = rng.random(n)
             pid3 = np.where(u < p_dem, "Democrat",
                             np.where(u < p_dem + (1 - p_ind) * (1 - logistic(z)), "Republican", "Independent"))  # fmt: skip
+            r7 = rng.random(n)
+            pid7 = np.where(pid3 == "Democrat", np.where(r7 < 0.6, "Strong Democrat", "Not Very Strong Democrat"),
+                    np.where(pid3 == "Republican", np.where(r7 < 0.6, "Strong Republican", "Not Very Strong Republican"),
+                    np.where(r7 < logistic(lean[i]) * 0.6, "Lean Democrat",
+                             np.where(r7 > 1 - (1 - logistic(lean[i])) * 0.6, "Lean Republican", "Independent"))))  # fmt: skip
             # Vote: party ID dominates; undecided mostly among independents
             util = (2.4 * (pid3 == "Democrat") - 2.4 * (pid3 == "Republican")
                     + 0.3 * lean[i] + SWING[y] + rng.normal(0, 0.5, n))  # fmt: skip
@@ -108,13 +115,21 @@ def simulate(out_dir: Path = OUT_DIR, seed: int = SEED) -> None:
                         "year": np.full(n, y, dtype=np.int32),
                         "case_id": np.arange(case_id, case_id + n),
                         "st": s, "age": age.astype(np.int32), "gender": gender,
-                        "race": race, "educ": educ, "pid3": pid3,
+                        "race": race, "educ": educ, "pid3": pid3, "pid7": pid7,
                         "weight": weight, "intent_sen": intent,
                     },
                     schema_overrides={"intent_sen": pl.String},
                 )
             )  # fmt: skip
             case_id += n
+            if y in PRES_YEARS:
+                m = 20000
+                pid = rng.choice(["D", "R", "I"], m, p=[p_dem.mean(), (1 - p_ind) - p_dem.mean(), p_ind])  # fmt: skip
+                ut = 2.4 * (pid == "D") - 2.4 * (pid == "R") + 0.3 * lean[i] + 0.6 * SWING[y] + rng.normal(0, 0.5, m)
+                d2p = float(np.clip(logistic(ut).mean() + rng.normal(0, 0.01), 0.05, 0.95))
+                total = int(rng.integers(8e5, 9e6))
+                pres.append({"year": y, "st": s, "dem_votes": int(total * 0.98 * d2p),
+                             "rep_votes": int(total * 0.98 * (1 - d2p)), "other_votes": int(total * 0.02)})  # fmt: skip
             if has_race:
                 # Population two-party Democratic share implied by the simulation
                 # (many draws, so sampling noise in the CES is not in the truth)
@@ -134,6 +149,7 @@ def simulate(out_dir: Path = OUT_DIR, seed: int = SEED) -> None:
 
     pl.concat(resp).write_parquet(out_dir / "simulated_ces.parquet")
     pl.DataFrame(truth).write_csv(out_dir / "simulated_senate_results.csv")
+    pl.DataFrame(pres).write_csv(out_dir / "simulated_president_results.csv")
 
     # ACS-like features: the true profile plus measurement noise
     acs = []

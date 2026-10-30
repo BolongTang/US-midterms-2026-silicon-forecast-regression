@@ -1,4 +1,4 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (figures + site added))
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (leakage audit + baselines))
 =====================================================================
 Goal: forecast every 2026 US Senate race (35 contests) with a state-level
 regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
@@ -7,7 +7,7 @@ vote share per state is the right target.
 
 Method (scripts/05-regression.py)
  - Unit of analysis: one row per state per election cycle.
- - Features: weighted CES state profile (male, white, Black, Hispanic, college,
+ - Features (LAGGED two years: cycle y uses the survey/ACS of y-2): weighted CES state profile (male, white, Black, Hispanic, college,
    mean age, % Republican, % Democrat) + ACS demographics (optional) + midterm flag.
  - Targets: three shares summing to 1: Democratic, Republican, Undecided/other.
  - Model: ridge regression on additive log-ratios (multi-class, stays on the
@@ -15,15 +15,17 @@ Method (scripts/05-regression.py)
  - Three training sets for the 2026 forecast: 2022 only, 2024 only, 2022+2024.
    Every single cycle (2014 ... 2024) is also a training set, plus 2014+2016+2018,
    "midterms" (2014, 2018, 2022) and "all" (six cycles) when the data are present.
- - Tests: leave-one-state-out, predict other cycles, leave-one-cycle-out; MAE of
-   each share vs. a mean-share baseline; winner accuracy; and, when
-   data/01-raw_data/senate_results.csv exists, error vs. certified two-party share.
+ - Tests: forward-chaining (train on earlier cycles, predict the next; the honest
+   forecast test) and leave-one-state-out (optimistic: sees same-cycle states); MAE
+   of each share vs. a fold-wise mean-share baseline; winner accuracy; error vs.
+   certified two-party share. Same-year-feature tables are kept only to show the leak.
  - 2026 features carry forward the 2024 CES (and ACS).
 
 Files
  scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
- scripts/01-download_data.py                CES 2014-2024 (2014-2020 -> ces_2014_2020.parquet)
-  scripts/01c-download_results.py            certified Senate results 2014-2024 (MIT Election Lab)
+ scripts/01-download_data.py                CES 2012-2024 (2012-2020 -> ces_2012_2020.parquet)
+  scripts/01d-download_president.py          certified presidential results 2008-2024 (baseline)
+ scripts/01c-download_results.py            certified Senate results 2014-2024 (MIT Election Lab)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
  scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
@@ -46,12 +48,19 @@ Status
  - CES 2014-2024 now downloaded; the real regression runs on all five cycles (CES
    features only). Real-data leave-one-cycle-out error for the 'midterms' set is
    WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
- - Real validation vs certified results (CES features, Dem two-party share, six cycles
-   2014-2024, 10 training sets): every training set beats the mean-share baseline.
-   Leave-one-state-out error 4.7-6.7 pp; best: 'all' (5.1 pp, 89% winners correct),
-   2022+2024 (5.1 pp, 85%), 2014+2016+2018 (5.2 pp, 83%). Single older cycles:
-   2014 5.5, 2016 5.4, 2018 5.2 pp. Out-of-cycle error is larger (5.0-8.1 pp);
-   2018 is the hardest cycle to predict from the others (8.1 pp).
+ - LEAKAGE AUDIT (details in paper/regression.qmd): same-year features, ACS vintage,
+   same-cycle information in leave-one-state-out, time-travel schemes, a baseline that
+   saw the held-out state, and a 2026 forecast trained on a different feature timing.
+   All fixed or labelled; certified results are never used to fit a model.
+ - Honest real-data accuracy (lagged features, forward-chaining, 'all' training set):
+   Dem two-party MAE 5.9 pp, winners correct 88%. Leaky same-year features gave 5.2 pp.
+ - SIMPLE BASELINES on identical state-races (139 races, 2016-2024, vs certified results):
+     last Senate result 89.9% winners / 5.5 pp,  last presidential result 89.2% / 4.3 pp,
+     party ID + leaners 87.8% / 5.1 pp,  ridge (ces) 87.1% / 5.6 pp,  party ID (pid3)
+     80.6% / 6.2 pp,  majority class and mean share 52.5%.
+   => The regression does NOT beat the best simple baselines at calling winners; its
+      value is the three-way share forecast (incl. Undecided). Natural next step: use the
+      last presidential/Senate result as FEATURES (known before the election).
  - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
    equal or slightly worse than CES-only); CES-only is the recommended primary set.
  - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.

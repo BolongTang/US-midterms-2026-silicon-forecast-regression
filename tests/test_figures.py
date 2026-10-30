@@ -42,7 +42,7 @@ def test_all_figures_build_and_save(results, tmp_path):
     figs, res = results
     plots = figs.all_figures(res)
     assert set(plots) == {"forecast_bars", "forecast_map", "model_comparison",
-                          "accuracy_scatter", "error_by_model"}  # fmt: skip
+                          "accuracy_scatter", "error_by_model", "leakage_check", "baselines"}  # fmt: skip
     for name, fig in plots.items():
         out = tmp_path / f"{name}.png"
         fig.save(out, dpi=60, verbose=False)
