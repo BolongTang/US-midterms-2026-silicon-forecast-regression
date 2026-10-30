@@ -41,6 +41,9 @@
 #   6. The 2026 forecast uses models trained on lagged features, matching the
 #      two-year-old features it is applied to.
 #
+# Feature sets: ces (survey profile), ces+acs, prior (previous presidential and Senate
+#   results only), ces+prior. All lagged; priors come from strictly earlier years.
+#
 # Baselines (simple, no fitting): party-ID majority (pid3, and pid7 with leaners),
 #   last Senate result, last presidential result, majority class, mean share.
 #
@@ -76,6 +79,11 @@ ACS_FEATURES = [
     "acs_male", "acs_white", "acs_black", "acs_hispanic", "acs_college",
     "acs_median_age", "acs_log_income",
 ]  # fmt: skip
+# Previous results as features: the state's last presidential and last Senate two-party
+# Democratic share, each from a year strictly before the target election. Where a state
+# had no earlier Senate race, the Senate share falls back to the presidential one and
+# has_prev_senate marks it.
+PRIOR_FEATURES = ["prev_president", "prev_senate_f", "has_prev_senate"]
 TARGET_YEAR = 2026
 FEATURE_YEAR = 2024  # CES / ACS year carried forward to 2026
 LAG = TARGET_YEAR - FEATURE_YEAR  # features lag the target by two years
@@ -214,6 +222,13 @@ def add_prior(table: pl.DataFrame, results: pl.DataFrame | None, name: str) -> p
     return out.drop("_y", f"{name}_year")
 
 
+def add_prior_features(table: pl.DataFrame) -> pl.DataFrame:
+    return table.with_columns(
+        prev_senate_f=pl.coalesce("prev_senate", "prev_president"),
+        has_prev_senate=pl.col("prev_senate").is_not_null().cast(pl.Float64),
+    )
+
+
 def build_training_table(ces, acs=None, official=None, president=None, lag: int = LAG) -> pl.DataFrame:
     """One row per state-race. Features come from the cycle `lag` years before the
     target, so lag=2 mimics forecasting 2026 from 2024 and lag=0 is the leaky,
@@ -231,7 +246,7 @@ def build_training_table(ces, acs=None, official=None, president=None, lag: int 
     if official is not None:
         table = table.join(official, on=["st", "year"], how="left")
     table = add_prior(table, load_prior(official, "official_dem2p"), "prev_senate")
-    table = add_prior(table, president, "prev_president")
+    table = add_prior_features(add_prior(table, president, "prev_president"))
     return table.with_columns(midterm=(pl.col("year") % 4 == 2).cast(pl.Float64))
 
 
@@ -244,7 +259,7 @@ def build_target_table(ces, acs=None, official=None, president=None) -> pl.DataF
     table = table.with_columns(feature_year=pl.lit(FEATURE_YEAR), year=pl.lit(TARGET_YEAR).cast(pl.Int64))
     table = add_acs(table, acs, lambda y: pl.lit(FEATURE_YEAR))
     table = add_prior(table, load_prior(official, "official_dem2p"), "prev_senate")
-    table = add_prior(table, president, "prev_president")
+    table = add_prior_features(add_prior(table, president, "prev_president"))
     return table.with_columns(midterm=pl.lit(1.0))
 
 
@@ -506,6 +521,9 @@ def run(source: str) -> dict:
     feature_sets = {"ces": CES_FEATURES + ["midterm"]}
     if acs is not None:
         feature_sets["ces+acs"] = CES_FEATURES + ACS_FEATURES + ["midterm"]
+    if president is not None:  # previous results as features (no survey / with survey)
+        feature_sets["prior"] = PRIOR_FEATURES + ["midterm"]
+        feature_sets["ces+prior"] = CES_FEATURES + PRIOR_FEATURES + ["midterm"]
 
     lagged = build_training_table(ces, acs, official, president, lag=LAG)
     years = sorted(lagged["year"].unique().to_list())
@@ -534,7 +552,7 @@ if __name__ == "__main__":
     source = args.source or ("real" if paths("real")["ces"][-1].exists() else "simulated")
     out = run(source)
     with pl.Config(tbl_rows=80, tbl_cols=20, fmt_float="mixed", fmt_str_lengths=40):
-        m = out["metrics"].filter(pl.col("features") == "ces", pl.col("train").is_in(["2022+2024", "all"]))
-        print(m.select("timing", "train", "scheme", "n", pl.col("official_mae_dem2p").round(1), pl.col("official_winner_acc").round(2)))
+        m = out["metrics"].filter(pl.col("timing") == "lagged", pl.col("train") == "all", pl.col("scheme") == FORWARD)
+        print(m.select("features", "train", "scheme", "n", pl.col("official_mae_dem2p").round(1), pl.col("official_winner_acc").round(2)))
         c = summarise_comparison(out["comparison"]).sort("winner_acc", descending=True)
         print(c)

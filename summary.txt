@@ -1,4 +1,4 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (leakage audit + baselines))
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (previous results as features))
 =====================================================================
 Goal: forecast every 2026 US Senate race (35 contests) with a state-level
 regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
@@ -58,9 +58,16 @@ Status
      last Senate result 89.9% winners / 5.5 pp,  last presidential result 89.2% / 4.3 pp,
      party ID + leaners 87.8% / 5.1 pp,  ridge (ces) 87.1% / 5.6 pp,  party ID (pid3)
      80.6% / 6.2 pp,  majority class and mean share 52.5%.
-   => The regression does NOT beat the best simple baselines at calling winners; its
-      value is the three-way share forecast (incl. Undecided). Natural next step: use the
-      last presidential/Senate result as FEATURES (known before the election).
+   => Survey-only regression does NOT beat the best simple baselines at calling winners.
+ - PREVIOUS RESULTS AS FEATURES (feature sets 'prior' and 'ces+prior': last presidential
+   and last Senate Dem two-party share, strictly earlier years; Senate share falls back to
+   the presidential one + a flag where a state had no earlier Senate race):
+   forward-chaining, 'all' training set, lagged: ces 5.9 pp / 88% winners, ces+acs 5.8 / 88%,
+   prior 5.0 / 90%, ces+prior 5.0 / 90%. On the 139 common races: prior 89.9% winners
+   (ties the best baseline, last Senate result) and 5.1 pp; ces+prior 89.2% / 4.9 pp;
+   last presidential result alone still has the lowest error (4.3 pp).
+   => Previous results lift the regression to the level of the best baselines but not
+      clearly past them; the survey adds little once previous results are known.
  - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
    equal or slightly worse than CES-only); CES-only is the recommended primary set.
  - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.

@@ -55,10 +55,16 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
       'all' (six cycles) and 2022+2024; Claude's page still headlines 2022+2024 (your
       requested pair). Switch to 'all'?
 
-[DECIDE] Baselines match or beat the regression at calling winners (see summary.txt).
-      Add the last presidential and last Senate result as regression features
-      (both known before the election)? Claude recommends yes; say the word and it will
-      add a 'ces+prior' feature set, re-run, and compare.
+[DECIDE] Previous results as features are DONE (feature sets 'prior', 'ces+prior'). They lift
+      accuracy to about the level of the best baselines (see summary.txt). Which feature
+      set should headline the 2026 forecast page? It currently uses ces+acs (chosen before
+      seeing these results). Switching to 'ces+prior' now would be choosing by test
+      performance, so treat the gain as indicative; the 2026 forecast for every feature set
+      is saved in data/02-analysis_data/regression_forecast_2026.parquet.
+
+[DECIDE] Possible next step: model the two-party Democratic share directly (e.g. regress it
+      on previous results) instead of the three-way log-ratio; the raw 'last presidential
+      result' baseline has lower error than the ridge on the same information.
 
 [DECIDE] Headline 2026 model: the forecast now uses models trained on LAGGED features
       (honest). Keep 'all' or 2022+2024 as headline?  (see the earlier item)

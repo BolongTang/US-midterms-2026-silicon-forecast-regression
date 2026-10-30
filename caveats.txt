@@ -46,6 +46,16 @@ LEAKAGE AND BASELINES
     the 'all' set; the reverse sign in some sets), so it is a risk control, not the
     main driver of accuracy.
 
+PREVIOUS-RESULT FEATURES
+21. The headline feature set was fixed before these features existed; choosing 'ces+prior'
+    or 'prior' now would select on test performance. Treat their gain as indicative.
+22. Where a state had no earlier Senate race the Senate feature falls back to the
+    presidential share (flagged). Previous presidential results are 2-4 years old,
+    depending on whether the target is a midterm or presidential year.
+23. A linear ridge on the three-way log-ratio is not guaranteed to match a raw baseline
+    with the same information: the 'last presidential result' baseline has lower error
+    (4.3 pp) than ridge on previous results (5.0 pp).
+
 SIMULATED DATA
 14. Simulated results (data/00-simulated_data/) come from a known generating
     process. High accuracy there shows the code works; it says nothing about

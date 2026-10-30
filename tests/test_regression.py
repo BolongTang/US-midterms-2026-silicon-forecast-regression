@@ -144,7 +144,7 @@ def test_train_sets_grow_with_available_years():
 def test_simulated_pipeline_runs_and_beats_baseline(tmp_path, monkeypatch):
     out = run_simulated(tmp_path, monkeypatch)
     metrics, preds = out["metrics"], out["preds"]
-    assert set(metrics["features"]) == {"ces", "ces+acs"}
+    assert set(metrics["features"]) == {"ces", "ces+acs", "prior", "ces+prior"}
     assert set(metrics["timing"]) == {"lagged", "contemporaneous"}
     assert {"midterms", "all", "2014", "2014+2016+2018"} <= set(metrics["train"])
     # Known data-generating process: the model should recover the Democratic share
@@ -226,3 +226,23 @@ def test_baselines_are_defined_and_use_only_history(tmp_path, monkeypatch):
     assert summary.filter(pl.col("method") == "baseline: majority class")["mae_dem2p"].is_null().all()
     assert summary.filter(pl.col("method") == "baseline: mean share")["winner_acc"][0] < 0.9
     assert out["baseline_forecast"]["st"].n_unique() == len(reg.SENATE_STATES_2026)
+
+
+def test_prior_features_fall_back_to_president_and_flag_it():
+    table = pl.DataFrame({"prev_senate": [0.6, None], "prev_president": [0.5, 0.4]})
+    out = reg.add_prior_features(table)
+    assert out["prev_senate_f"].to_list() == [0.6, 0.4]  # missing Senate share -> presidential share
+    assert out["has_prev_senate"].to_list() == [1.0, 0.0]
+
+
+def test_prior_feature_sets_exist_and_forecast_every_race(tmp_path, monkeypatch):
+    out = run_simulated(tmp_path, monkeypatch)
+    f = out["preds"].filter(pl.col("features").is_in(["prior", "ces+prior"]))
+    assert f["features"].n_unique() == 2
+    assert f.group_by("features", "train").agg(n=pl.col("st").n_unique())["n"].to_list() == [len(reg.SENATE_STATES_2026)] * (2 * len(out["sets"]))
+    # the simulated state lean persists, so previous results should call winners well
+    fwd = out["metrics"].filter(pl.col("scheme") == reg.FORWARD, pl.col("timing") == "lagged", pl.col("features") == "prior", pl.col("train") == "all")
+    assert fwd["official_winner_acc"][0] > 0.85
+    # targets never feed the priors: no prior feature equals the same row's certified share
+    tbl = out["tables"]["lagged"]
+    assert not (tbl["prev_president"] == tbl["official_dem2p"]).any()

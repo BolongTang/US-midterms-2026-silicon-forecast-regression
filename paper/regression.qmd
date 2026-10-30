@@ -270,14 +270,35 @@ table(by.rename(columns={"method": "Method"}))
 
 ```{python}
 #| output: asis
-best = res["summary"].sort("winner_acc", descending=True)
+best = res["summary"].filter(pl.col("method").str.starts_with("baseline")).sort("winner_acc", descending=True)
 ridge = res["summary"].filter(pl.col("method").str.starts_with("ridge")).sort("winner_acc", descending=True)
 b0, r0 = best.row(0, named=True), ridge.row(0, named=True)
-verdict = "beats" if r0["winner_acc"] > b0["winner_acc"] else "does not beat"
-print(f"""**Reading.** On identical rows the regression calls {100*r0['winner_acc']:.0f}% of winners correctly;
-the best baseline, *{b0['method'].replace('baseline: ', '')}*, calls {100*b0['winner_acc']:.0f}%. The regression
-{verdict} the best simple baseline at calling winners. Its value is the full three-way share forecast
-(including Undecided), which no baseline gives.""")
+verdict = "beats" if r0["winner_acc"] > b0["winner_acc"] + 1e-9 else ("matches" if abs(r0["winner_acc"] - b0["winner_acc"]) < 1e-9 else "does not beat")
+low = res["summary"].drop_nulls("mae_dem2p").sort("mae_dem2p").row(0, named=True)
+print(f"""**Reading.** On identical rows the best regression (*{r0['method'].replace('ridge, all earlier cycles ', '')}*) calls
+{100*r0['winner_acc']:.0f}% of winners correctly; the best simple baseline, *{b0['method'].replace('baseline: ', '')}*, calls
+{100*b0['winner_acc']:.0f}%. The regression {verdict} the best baseline at calling winners. The lowest vote-share error is
+*{low['method'].replace('baseline: ', '').replace('ridge, all earlier cycles ', 'ridge ')}* at {low['mae_dem2p']:.1f} points.
+The regression's distinct value is the full three-way share forecast, including Undecided.""")
+```
+
+## Previous results as features
+
+The two baselines that did best, the last presidential and last Senate results, are known before the election,
+so they can also be *features*. Two feature sets add them: `prior` (previous results only, no survey) and
+`ces+prior` (survey profile plus previous results). Each state's last presidential and Senate share come from a
+year strictly before the target election; where a state had no earlier Senate race, the presidential share is
+used and a flag marks it.
+
+```{python}
+pf = (
+    metrics_lag.filter(pl.col("scheme") == "forward-chaining", pl.col("train").is_in(["2022+2024", "all"]))
+    .select(pl.col("features").alias("Features"), pl.col("train").alias("Trained on"), pl.col("n").alias("Test rows"),
+            pl.col("official_mae_dem2p").alias("Dem two-party MAE vs results (pp)"),
+            (100 * pl.col("official_winner_acc")).alias("Winner correct vs results (%)"))
+    .sort("Trained on", "Features").to_pandas()
+)
+table(pf)
 ```
 
 # Method

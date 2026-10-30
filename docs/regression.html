@@ -135,7 +135,10 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#regressions-on-the-older-cycles-2014-2016-2018" id="toc-regressions-on-the-older-cycles-2014-2016-2018" class="nav-link" data-scroll-target="#regressions-on-the-older-cycles-2014-2016-2018">Regressions on the older cycles (2014, 2016, 2018)</a></li>
   </ul></li>
   <li><a href="#leakage-audit" id="toc-leakage-audit" class="nav-link" data-scroll-target="#leakage-audit">Leakage audit</a></li>
-  <li><a href="#simple-baselines" id="toc-simple-baselines" class="nav-link" data-scroll-target="#simple-baselines">Simple baselines</a></li>
+  <li><a href="#simple-baselines" id="toc-simple-baselines" class="nav-link" data-scroll-target="#simple-baselines">Simple baselines</a>
+  <ul class="collapse">
+  <li><a href="#previous-results-as-features" id="toc-previous-results-as-features" class="nav-link" data-scroll-target="#previous-results-as-features">Previous results as features</a></li>
+  </ul></li>
   <li><a href="#method" id="toc-method" class="nav-link" data-scroll-target="#method">Method</a></li>
   <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats">Caveats</a></li>
   </ul>
@@ -200,7 +203,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="forecast" class="level1">
 <h1>Forecast</h1>
-<div id="f9aa102c" class="cell" data-execution_count="4">
+<div id="d3a58605" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display" data-execution_count="4">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -210,7 +213,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="230cbb22" class="cell" data-execution_count="5">
+<div id="d04a1c3a" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display" data-execution_count="5">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -223,7 +226,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="table-of-predictions" class="level2">
 <h2 class="anchored" data-anchor-id="table-of-predictions">Table of predictions</h2>
 <p>Percentages for every race (model trained on 2022+2024, features ces+acs).</p>
-<div id="ca32d6a3" class="cell" data-execution_count="6">
+<div id="474468a7" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -526,7 +529,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="does-the-training-set-matter" class="level1">
 <h1>Does the training set matter?</h1>
 <p>The three requested training sets are 2022 only, 2024 only, and both cycles together.</p>
-<div id="c1ae8dcf" class="cell" data-execution_count="7">
+<div id="e5b23546" class="cell" data-execution_count="7">
 <div class="cell-output cell-output-display" data-execution_count="7">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -536,7 +539,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="939ee579" class="cell" data-execution_count="8">
+<div id="bdc8f154" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -771,7 +774,7 @@ ul.task-list li input[type="checkbox"] {
 <li><strong>Leave-one-state-out</strong> holds out a state but keeps the other states of the same election in training. It is <em>optimistic</em>, because those states reveal that year’s national swing; it is shown for comparison.</li>
 </ul>
 <p>The baseline predicts every state with the training-set average share, computed inside each training fold.</p>
-<div id="f8567b0f" class="cell" data-execution_count="9">
+<div id="71b3f3eb" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display" data-execution_count="9">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -781,17 +784,17 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="dd6af2c6" class="cell" data-execution_count="10">
+<div id="302e3cf0" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display" data-execution_count="10">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="regression_files/figure-html/cell-11-output-1.png" alt="Bar chart of mean absolute error in Democratic share by training set, with baseline error shown as diamonds well above the bars." width="816" height="528" class="figure-img"></p>
+<p><img src="regression_files/figure-html/cell-11-output-1.png" alt="Bar chart of mean absolute error in Democratic share by training set, with baseline error shown as diamonds well above the bars." width="816" height="864" class="figure-img"></p>
 <figcaption>Error of the model and of the mean-share baseline, by training set and test scheme.</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<div id="e3ad34d0" class="cell" data-execution_count="11">
+<div id="bce82720" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -1265,6 +1268,462 @@ ul.task-list li input[type="checkbox"] {
 <td>83.9</td>
 <td>87.9</td>
 </tr>
+<tr class="odd">
+<td>prior</td>
+<td>2014</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>6.9</td>
+<td>5.9</td>
+<td>5.3</td>
+<td>9.6</td>
+<td>73.5</td>
+<td>87.5</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2014</td>
+<td>forward-chaining</td>
+<td>168</td>
+<td>5.5</td>
+<td>4.8</td>
+<td>5.8</td>
+<td>8.9</td>
+<td>85.1</td>
+<td>86.6</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>2016</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>5.4</td>
+<td>5.0</td>
+<td>6.2</td>
+<td>9.8</td>
+<td>73.5</td>
+<td>84.8</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2016</td>
+<td>forward-chaining</td>
+<td>134</td>
+<td>6.0</td>
+<td>6.5</td>
+<td>8.3</td>
+<td>8.9</td>
+<td>86.6</td>
+<td>90.3</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>2018</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>33</td>
+<td>4.6</td>
+<td>4.6</td>
+<td>4.3</td>
+<td>7.2</td>
+<td>87.9</td>
+<td>83.9</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2018</td>
+<td>forward-chaining</td>
+<td>101</td>
+<td>8.6</td>
+<td>5.3</td>
+<td>6.6</td>
+<td>10.3</td>
+<td>73.3</td>
+<td>77.4</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>2020</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>4.0</td>
+<td>4.1</td>
+<td>4.8</td>
+<td>7.3</td>
+<td>88.2</td>
+<td>87.5</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2020</td>
+<td>forward-chaining</td>
+<td>67</td>
+<td>4.9</td>
+<td>5.6</td>
+<td>6.6</td>
+<td>9.5</td>
+<td>89.6</td>
+<td>86.9</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>2022</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>6.0</td>
+<td>5.1</td>
+<td>7.3</td>
+<td>10.8</td>
+<td>85.3</td>
+<td>86.2</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2022</td>
+<td>forward-chaining</td>
+<td>33</td>
+<td>6.2</td>
+<td>4.6</td>
+<td>7.8</td>
+<td>8.8</td>
+<td>93.9</td>
+<td>87.5</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>2024</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>33</td>
+<td>4.1</td>
+<td>4.5</td>
+<td>4.2</td>
+<td>7.5</td>
+<td>87.9</td>
+<td>87.5</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2014+2016+2018</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>101</td>
+<td>5.6</td>
+<td>5.1</td>
+<td>5.2</td>
+<td>9.4</td>
+<td>81.2</td>
+<td>88.5</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>2014+2016+2018</td>
+<td>forward-chaining</td>
+<td>67</td>
+<td>7.1</td>
+<td>5.9</td>
+<td>7.2</td>
+<td>9.8</td>
+<td>79.1</td>
+<td>85.9</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2022+2024</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>67</td>
+<td>5.1</td>
+<td>4.9</td>
+<td>5.9</td>
+<td>9.3</td>
+<td>88.1</td>
+<td>85.2</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>2022+2024</td>
+<td>forward-chaining</td>
+<td>33</td>
+<td>6.2</td>
+<td>4.6</td>
+<td>7.8</td>
+<td>8.8</td>
+<td>93.9</td>
+<td>87.5</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>midterms</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>101</td>
+<td>6.5</td>
+<td>5.0</td>
+<td>6.1</td>
+<td>9.7</td>
+<td>82.2</td>
+<td>88.0</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>midterms</td>
+<td>forward-chaining</td>
+<td>67</td>
+<td>9.3</td>
+<td>4.9</td>
+<td>8.0</td>
+<td>10.4</td>
+<td>80.6</td>
+<td>78.3</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>all</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>202</td>
+<td>5.4</td>
+<td>4.8</td>
+<td>5.6</td>
+<td>9.0</td>
+<td>84.7</td>
+<td>90.5</td>
+</tr>
+<tr class="odd">
+<td>prior</td>
+<td>all</td>
+<td>forward-chaining</td>
+<td>168</td>
+<td>6.1</td>
+<td>5.2</td>
+<td>6.7</td>
+<td>9.0</td>
+<td>85.7</td>
+<td>89.8</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2014</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>7.3</td>
+<td>6.0</td>
+<td>4.8</td>
+<td>9.6</td>
+<td>73.5</td>
+<td>87.5</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2014</td>
+<td>forward-chaining</td>
+<td>168</td>
+<td>6.3</td>
+<td>4.7</td>
+<td>6.0</td>
+<td>8.9</td>
+<td>85.1</td>
+<td>89.2</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2016</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>4.7</td>
+<td>4.9</td>
+<td>5.7</td>
+<td>9.8</td>
+<td>79.4</td>
+<td>90.9</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2016</td>
+<td>forward-chaining</td>
+<td>134</td>
+<td>6.7</td>
+<td>6.7</td>
+<td>6.8</td>
+<td>8.9</td>
+<td>82.1</td>
+<td>85.5</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2018</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>33</td>
+<td>5.4</td>
+<td>5.1</td>
+<td>4.4</td>
+<td>7.2</td>
+<td>81.8</td>
+<td>83.9</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2018</td>
+<td>forward-chaining</td>
+<td>101</td>
+<td>9.2</td>
+<td>5.8</td>
+<td>6.7</td>
+<td>10.3</td>
+<td>64.4</td>
+<td>67.7</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2020</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>4.9</td>
+<td>4.1</td>
+<td>4.5</td>
+<td>7.3</td>
+<td>85.3</td>
+<td>78.1</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2020</td>
+<td>forward-chaining</td>
+<td>67</td>
+<td>6.0</td>
+<td>6.8</td>
+<td>6.5</td>
+<td>9.5</td>
+<td>80.6</td>
+<td>77.0</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2022</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>34</td>
+<td>6.9</td>
+<td>5.0</td>
+<td>7.0</td>
+<td>10.8</td>
+<td>82.4</td>
+<td>82.8</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2022</td>
+<td>forward-chaining</td>
+<td>33</td>
+<td>5.5</td>
+<td>4.5</td>
+<td>7.2</td>
+<td>8.8</td>
+<td>97.0</td>
+<td>84.4</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2024</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>33</td>
+<td>4.6</td>
+<td>4.6</td>
+<td>4.1</td>
+<td>7.5</td>
+<td>90.9</td>
+<td>84.4</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2014+2016+2018</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>101</td>
+<td>5.7</td>
+<td>5.1</td>
+<td>4.8</td>
+<td>9.4</td>
+<td>82.2</td>
+<td>89.6</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2014+2016+2018</td>
+<td>forward-chaining</td>
+<td>67</td>
+<td>6.9</td>
+<td>4.7</td>
+<td>5.9</td>
+<td>9.8</td>
+<td>76.1</td>
+<td>85.9</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2022+2024</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>67</td>
+<td>5.3</td>
+<td>4.6</td>
+<td>5.4</td>
+<td>9.3</td>
+<td>91.0</td>
+<td>85.2</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>2022+2024</td>
+<td>forward-chaining</td>
+<td>33</td>
+<td>5.5</td>
+<td>4.5</td>
+<td>7.2</td>
+<td>8.8</td>
+<td>97.0</td>
+<td>84.4</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>midterms</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>101</td>
+<td>6.4</td>
+<td>5.1</td>
+<td>6.0</td>
+<td>9.7</td>
+<td>83.2</td>
+<td>84.8</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>midterms</td>
+<td>forward-chaining</td>
+<td>67</td>
+<td>9.0</td>
+<td>4.8</td>
+<td>8.2</td>
+<td>10.4</td>
+<td>82.1</td>
+<td>83.3</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>all</td>
+<td>leave-one-state-out (same-cycle info)</td>
+<td>202</td>
+<td>5.5</td>
+<td>4.7</td>
+<td>5.4</td>
+<td>9.0</td>
+<td>85.1</td>
+<td>88.9</td>
+</tr>
+<tr class="even">
+<td>ces+prior</td>
+<td>all</td>
+<td>forward-chaining</td>
+<td>168</td>
+<td>6.1</td>
+<td>4.8</td>
+<td>6.0</td>
+<td>9.0</td>
+<td>85.7</td>
+<td>89.8</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -1281,7 +1740,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="regressions-on-the-older-cycles-2014-2016-2018" class="level2">
 <h2 class="anchored" data-anchor-id="regressions-on-the-older-cycles-2014-2016-2018">Regressions on the older cycles (2014, 2016, 2018)</h2>
 <p>Each older cycle can be used on its own, or together as <code>2014+2016+2018</code>. The table compares them with the newer pair (<code>2022+2024</code>) and with every cycle together (<code>all</code>), all scored against certified results.</p>
-<div id="f9e40d47" class="cell" data-execution_count="12">
+<div id="e974dcea" class="cell" data-execution_count="12">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -1395,7 +1854,7 @@ ul.task-list li input[type="checkbox"] {
 </table>
 </div>
 </div>
-<div id="ebe418b3" class="cell" data-execution_count="13">
+<div id="240a21d0" class="cell" data-execution_count="13">
 <div class="cell-output cell-output-display cell-output-markdown">
 <p><strong>2026 predictions: older cycles versus newer cycles versus all cycles</strong></p>
 </div>
@@ -1677,7 +2136,7 @@ ul.task-list li input[type="checkbox"] {
 </table>
 <p>Checked and clean: certified results are never used to fit a model (only to score it, or as a baseline’s <em>earlier</em> result); ridge penalty and feature scaling are fit inside each training set; every baseline uses only results from years strictly before the target year. One residual: CES <code>case_id</code>s do not repeat across cycles in the cumulative file, so any panel overlap between survey waves cannot be checked.</p>
 <p>How much did the leak flatter accuracy? The figure compares lagged (honest) with same-year (leaky) features.</p>
-<div id="7815d947" class="cell" data-execution_count="15">
+<div id="f6fbfd05" class="cell" data-execution_count="15">
 <div class="cell-output cell-output-display" data-execution_count="15">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -1687,7 +2146,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="a30ca123" class="cell" data-execution_count="16">
+<div id="bda53497" class="cell" data-execution_count="16">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -1745,7 +2204,7 @@ ul.task-list li input[type="checkbox"] {
 <li><strong>Mean share:</strong> every state gets the average two-party share of earlier races.</li>
 </ol>
 <p>All six use only information from before the target election, and are scored on exactly the same state-races as the regression (those where every method makes a prediction), against certified results.</p>
-<div id="f190ada3" class="cell" data-execution_count="17">
+<div id="d206f789" class="cell" data-execution_count="17">
 <div class="cell-output cell-output-display" data-execution_count="17">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -1755,7 +2214,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="db8783a4" class="cell" data-execution_count="18">
+<div id="069dafd1" class="cell" data-execution_count="18">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -1774,10 +2233,22 @@ ul.task-list li input[type="checkbox"] {
 <td>5.5</td>
 </tr>
 <tr class="even">
+<td>ridge, all earlier cycles (prior)</td>
+<td>139</td>
+<td>89.9</td>
+<td>5.1</td>
+</tr>
+<tr class="odd">
 <td>baseline: last presidential result</td>
 <td>139</td>
 <td>89.2</td>
 <td>4.3</td>
+</tr>
+<tr class="even">
+<td>ridge, all earlier cycles (ces+prior)</td>
+<td>139</td>
+<td>89.2</td>
+<td>4.9</td>
 </tr>
 <tr class="odd">
 <td>baseline: party ID + leaners (pid7)</td>
@@ -1786,13 +2257,13 @@ ul.task-list li input[type="checkbox"] {
 <td>5.1</td>
 </tr>
 <tr class="even">
-<td>ridge, all earlier cycles (ces)</td>
+<td>ridge, all earlier cycles (ces+acs)</td>
 <td>139</td>
 <td>87.1</td>
 <td>5.6</td>
 </tr>
 <tr class="odd">
-<td>ridge, all earlier cycles (ces+acs)</td>
+<td>ridge, all earlier cycles (ces)</td>
 <td>139</td>
 <td>87.1</td>
 <td>5.6</td>
@@ -1804,23 +2275,23 @@ ul.task-list li input[type="checkbox"] {
 <td>6.2</td>
 </tr>
 <tr class="odd">
-<td>baseline: mean share</td>
-<td>139</td>
-<td>52.5</td>
-<td>9.9</td>
-</tr>
-<tr class="even">
 <td>baseline: majority class</td>
 <td>139</td>
 <td>52.5</td>
 <td>–</td>
+</tr>
+<tr class="even">
+<td>baseline: mean share</td>
+<td>139</td>
+<td>52.5</td>
+<td>9.9</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <p>By test year (winners correct, %):</p>
-<div id="fc04c8cc" class="cell" data-execution_count="19">
+<div id="bd7d3cd4" class="cell" data-execution_count="19">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -1898,11 +2369,104 @@ ul.task-list li input[type="checkbox"] {
 <td>92.9</td>
 <td>84.4</td>
 </tr>
+<tr class="odd">
+<td>ridge, all earlier cycles (ces+prior)</td>
+<td>93.8</td>
+<td>77.4</td>
+<td>100.0</td>
+<td>89.3</td>
+<td>87.5</td>
+</tr>
+<tr class="even">
+<td>ridge, all earlier cycles (prior)</td>
+<td>93.8</td>
+<td>80.6</td>
+<td>100.0</td>
+<td>85.7</td>
+<td>90.6</td>
+</tr>
 </tbody>
 </table>
 </div>
 </div>
-<p><strong>Reading.</strong> On identical rows the regression calls 87% of winners correctly; the best baseline, <em>last Senate result</em>, calls 90%. The regression does not beat the best simple baseline at calling winners. Its value is the full three-way share forecast (including Undecided), which no baseline gives.</p>
+<p><strong>Reading.</strong> On identical rows the best regression (<em>(prior)</em>) calls 90% of winners correctly; the best simple baseline, <em>last Senate result</em>, calls 90%. The regression matches the best baseline at calling winners. The lowest vote-share error is <em>last presidential result</em> at 4.3 points. The regression’s distinct value is the full three-way share forecast, including Undecided.</p>
+<section id="previous-results-as-features" class="level2">
+<h2 class="anchored" data-anchor-id="previous-results-as-features">Previous results as features</h2>
+<p>The two baselines that did best, the last presidential and last Senate results, are known before the election, so they can also be <em>features</em>. Two feature sets add them: <code>prior</code> (previous results only, no survey) and <code>ces+prior</code> (survey profile plus previous results). Each state’s last presidential and Senate share come from a year strictly before the target election; where a state had no earlier Senate race, the presidential share is used and a flag marks it.</p>
+<div id="fca9b845" class="cell" data-execution_count="21">
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm caption-top table-striped small">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">Features</th>
+<th data-quarto-table-cell-role="th">Trained on</th>
+<th data-quarto-table-cell-role="th">Test rows</th>
+<th data-quarto-table-cell-role="th">Dem two-party MAE vs results (pp)</th>
+<th data-quarto-table-cell-role="th">Winner correct vs results (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ces</td>
+<td>2022+2024</td>
+<td>33</td>
+<td>5.8</td>
+<td>84.4</td>
+</tr>
+<tr class="even">
+<td>ces+acs</td>
+<td>2022+2024</td>
+<td>33</td>
+<td>7.1</td>
+<td>78.1</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>2022+2024</td>
+<td>33</td>
+<td>4.7</td>
+<td>84.4</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>2022+2024</td>
+<td>33</td>
+<td>5.0</td>
+<td>87.5</td>
+</tr>
+<tr class="odd">
+<td>ces</td>
+<td>all</td>
+<td>168</td>
+<td>5.9</td>
+<td>87.9</td>
+</tr>
+<tr class="even">
+<td>ces+acs</td>
+<td>all</td>
+<td>168</td>
+<td>5.8</td>
+<td>87.9</td>
+</tr>
+<tr class="odd">
+<td>ces+prior</td>
+<td>all</td>
+<td>168</td>
+<td>5.0</td>
+<td>89.8</td>
+</tr>
+<tr class="even">
+<td>prior</td>
+<td>all</td>
+<td>168</td>
+<td>5.0</td>
+<td>89.8</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
 </section>
 <section id="method" class="level1">
 <h1>Method</h1>

@@ -207,7 +207,7 @@ def fig_metrics(metrics: pl.DataFrame):
         + labs(title="Prediction error by training set",
                subtitle="Bars: model error in Democratic share; diamonds: mean-share baseline\nfrom the same training data",
                x="Training years", y="Mean absolute error (percentage points)")
-        + base_theme(figure_size=(8.5, 5.5), axis_text_x=element_text(angle=30, ha="right", color=INK2))
+        + base_theme(figure_size=(8.5, 9), axis_text_x=element_text(angle=30, ha="right", color=INK2))
     )  # fmt: skip
 
 
@@ -250,9 +250,9 @@ def fig_baselines(summary: pl.DataFrame):
 
 def all_figures(res: dict) -> dict:
     return {
-        "forecast_bars": fig_forecast(res["preds"]),
-        "forecast_map": fig_tilemap(res["preds"]),
-        "model_comparison": fig_models(res["preds"]),
+        "forecast_bars": fig_forecast(res["preds"], features=res["oos_features"]),
+        "forecast_map": fig_tilemap(res["preds"], features=res["oos_features"]),
+        "model_comparison": fig_models(res["preds"], features=res["oos_features"]),
         "accuracy_scatter": fig_accuracy(res["oos"], res["has_official"], res["oos_label"]),
         "error_by_model": fig_metrics(res["metrics"]),
         "leakage_check": fig_leakage(res["metrics"]),
