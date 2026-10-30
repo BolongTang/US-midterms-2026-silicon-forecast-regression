@@ -80,7 +80,9 @@ def fetch_year(year: int) -> pl.DataFrame:
     for group in chunks(list(VARIABLES)):
         params = {"get": "NAME," + ",".join(group), "for": "state:*", "key": key}
         r = httpx.get(url, params=params, timeout=60)
-        r.raise_for_status()
+        if r.status_code != 200:  # never print the URL: it contains the key
+            hint = " (Census rejected the key: check it and activate it via the email link)" if "invalid_key" in r.headers.get("location", "") else ""
+            raise SystemExit(f"ACS {year}: HTTP {r.status_code}{hint}")
         header, *rows = r.json()
         frames.append(pl.DataFrame(rows, schema=header, orient="row").drop("state"))
     df = frames[0]

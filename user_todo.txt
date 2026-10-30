@@ -2,11 +2,11 @@ USER TODO  (kept up to date by Claude; last updated 2026-10-30)
 =====================================================================
 Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your action.
 
-[DO]  ACS download needs CENSUS_API_KEY, which is NOT visible in the current Claude
-      session (environment variables added after a session starts only reach NEW
-      sessions). Either start a new session on this repo and ask Claude to run
-      `python scripts/01b-download_acs.py`, or run it yourself with the key in .env.
-      The script batches variables (limit 50 per request; it uses 12 now).
+[DO]  ACS download is blocked: api.census.gov rejected the Census key you gave Claude
+      (redirect to invalid_key.html). Most likely the key is not activated yet:
+      open the activation link in the email from Census, or request a new key at
+      https://api.census.gov/data/key_signup.html. Then give Claude the new key (it is
+      used inline and never written to a file) or set CENSUS_API_KEY in a new session.
       Note: ACS is not on Harvard Dataverse; it comes only from api.census.gov.
 
 [DONE] CES 2016-2020 downloaded from Dataverse (data/01-raw_data/ces_2016_2020.parquet);
