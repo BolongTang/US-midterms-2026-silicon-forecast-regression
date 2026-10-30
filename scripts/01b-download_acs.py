@@ -1,11 +1,13 @@
 #### Preamble ####
 # Purpose: Download state-level demographics from the Census Bureau ACS 5-year
-#          estimates for the 2022 and 2024 cycles (and 2024 again for the 2026 forecast).
+#          estimates for 2016-2024 election cycles (2024 is reused for the 2026 forecast).
 # Author: Yi Zhi Zhang
 # Date: 30 October 2026
 # Contact: yizhiharry.zhang@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: Internet access (api.census.gov). No key needed for this volume.
+# Pre-requisites: Internet access (api.census.gov) and a free Census API key
+#   (https://api.census.gov/data/key_signup.html). Put it in .env as
+#   CENSUS_API_KEY=... (see .env.example).
 #
 # Outputs (in data/01-raw_data/):
 #   - acs_state.parquet: one row per state and ACS year, with shares in [0, 1]
@@ -15,12 +17,17 @@
 #### Workspace setup ####
 from pathlib import Path
 
+import os
+
 import httpx
 import polars as pl
+from dotenv import load_dotenv
+
+load_dotenv()
 
 RAW_DIR = Path("data/01-raw_data")
 RAW_DIR.mkdir(parents=True, exist_ok=True)
-ACS_YEARS = [2022, 2024]  # 5-year ACS ending in these years
+ACS_YEARS = [2016, 2018, 2020, 2022, 2024]  # 5-year ACS ending in these years
 
 # Variable codes from tables B01001, B01002, B02001, B03003, B15003, B19013
 VARIABLES = {
@@ -58,7 +65,10 @@ STATES = {
 #### Download ####
 def fetch_year(year: int) -> pl.DataFrame:
     url = f"https://api.census.gov/data/{year}/acs/acs5"
-    params = {"get": "NAME," + ",".join(VARIABLES), "for": "state:*"}
+    key = os.environ.get("CENSUS_API_KEY")
+    if not key:
+        raise SystemExit("Set CENSUS_API_KEY in .env (see .env.example).")
+    params = {"get": "NAME," + ",".join(VARIABLES), "for": "state:*", "key": key}
     r = httpx.get(url, params=params, timeout=60)
     r.raise_for_status()
     header, *rows = r.json()

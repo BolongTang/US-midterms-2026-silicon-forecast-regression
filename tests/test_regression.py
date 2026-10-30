@@ -113,16 +113,41 @@ def test_training_table_has_no_nulls(real):
 def test_forecast_covers_every_2026_race(real):
     table, target, fsets = real
     assert set(target["st"]) == set(reg.SENATE_STATES_2026)
-    f = reg.forecast(table, target, fsets)
-    assert f.height == len(reg.SENATE_STATES_2026) * len(reg.TRAIN_SETS)
-    assert set(f["train"]) == set(reg.TRAIN_SETS)
+    sets = reg.train_sets([2022, 2024])
+    f = reg.forecast(table, target, fsets, sets)
+    assert f.height == len(reg.SENATE_STATES_2026) * 3
+    assert set(f["train"]) == {"2022", "2024", "2022+2024"}
     assert (f["p_dem"] + f["p_rep"] + f["p_und"]).to_numpy() == pytest.approx(1.0)
     assert f.select(pl.all().null_count()).sum_horizontal()[0] == 0
 
 
 def test_model_beats_mean_baseline_out_of_sample(real):
     table, _, fsets = real
-    m = reg.evaluate(table, fsets)
-    assert m.height == 5  # 3 leave-one-state-out + 2 cross-cycle
+    m = reg.evaluate(table, fsets, reg.train_sets([2022, 2024]))
+    assert m.height == 6  # 3 leave-one-state-out + 2 cross-cycle + 1 leave-one-cycle-out
     assert (m["mae_dem"] < m["baseline_mae_dem"]).all()
     assert (m["winner_acc_ces"] > 0.7).all()
+
+
+#### Training sets and simulated end-to-end ####
+def test_train_sets_grow_with_available_years():
+    assert reg.train_sets([2022, 2024]) == {"2022": [2022], "2024": [2024], "2022+2024": [2022, 2024]}
+    wide = reg.train_sets([2016, 2018, 2020, 2022, 2024])
+    assert wide["midterms"] == [2018, 2022]
+    assert wide["all"] == [2016, 2018, 2020, 2022, 2024]
+
+
+def test_simulated_pipeline_runs_and_beats_baseline(tmp_path, monkeypatch):
+    sim = importlib.util.spec_from_file_location("sim", ROOT / "scripts" / "00b-simulate_regression_inputs.py")
+    mod = importlib.util.module_from_spec(sim)
+    sim.loader.exec_module(mod)
+    mod.simulate(tmp_path / "data" / "00-simulated_data")
+    monkeypatch.setattr(reg, "ROOT", tmp_path)
+    metrics, preds = reg.run("simulated")
+    assert set(metrics["features"]) == {"ces", "ces+acs"}
+    assert {"midterms", "all"} <= set(metrics["train"])
+    # Known data-generating process: the model should recover the Democratic share
+    assert (metrics["mae_dem"] < 0.5 * metrics["baseline_mae_dem"]).all()
+    assert (metrics["official_winner_acc"] > 0.85).all()
+    assert len(preds["st"].unique()) == len(reg.SENATE_STATES_2026)
+    assert (preds["p_dem"] + preds["p_rep"] + preds["p_und"]).to_numpy() == pytest.approx(1.0)

@@ -1,0 +1,48 @@
+USER TODO  (kept up to date by Claude; last updated 2026-10-30)
+=====================================================================
+Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your action.
+
+[DO]  Get a free Census API key: https://api.census.gov/data/key_signup.html
+      Put it in .env as CENSUS_API_KEY=... (copy .env.example to .env first).
+      Then run: uv run scripts/01b-download_acs.py
+      (Claude's sandbox blocks api.census.gov, so this has to run on your side
+      or after the environment's Network access allows that host.)
+
+[DO]  Re-run the CES download to add 2016/2018/2020:
+      uv run scripts/01-download_data.py   -> creates data/01-raw_data/ces_2016_2020.parquet
+      (Claude's sandbox blocks dataverse.harvard.edu.)
+      Commit the new parquet files afterwards.
+
+[DO]  Provide certified Senate results as data/01-raw_data/senate_results.csv
+      Columns: year, st, dem_votes, rep_votes, other_votes   (2016-2024 cycles)
+      Source suggestion: MIT Election Lab / state certified results.
+      Claude does not type results from memory.
+      Without this file, accuracy is measured only against CES respondents.
+
+[DO]  Run the real regression once the three inputs above exist:
+      uv run scripts/05-regression.py --source real
+      and tell Claude to review the metrics (data/02-analysis_data/regression_metrics.parquet).
+
+[DECIDE] Which 2026 feature source is primary: CES-only, or CES+ACS?
+      (Both are computed. Pick after seeing real-data accuracy.)
+
+[DECIDE] Independents who caucus with a party (King ME, Sanders VT, Osborn NE):
+      code them by candidate ("Democratic-aligned") or by party label?
+      Currently by label, which mis-codes them. Affects the official-results check only.
+
+[DECIDE] Nebraska 2024 had two Senate races; CES has one vote per respondent.
+      Treat as one race (current) or drop NE 2024 from training?
+
+[DECIDE] Midterm swing for 2026: the model learns a midterm effect only from
+      midterm cycles (2018, 2022, ...). Do you want a manual adjustment
+      (e.g. +/- X points toward the out-party)?  Default: none.
+
+[DECIDE] Open a pull request from Regression into main? (Claude will not open one
+      unless you say so.)
+
+[DO]  Run `uv lock` locally and commit uv.lock (scikit-learn was added to
+      pyproject.toml; uv sync was too slow in Claude's sandbox).
+
+Done so far (for reference):
+  - Regression pipeline, ACS downloader (with API-key slot), simulator, tests.
+  - Pipeline runs on simulated data via --source simulated.

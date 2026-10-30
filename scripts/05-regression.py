@@ -9,6 +9,7 @@
 # License: MIT
 # Pre-requisites: Run 01-download_data.py. Optional inputs that add features and
 #   an independent accuracy check (the script runs without them):
+#   - data/01-raw_data/ces_2016_2020.parquet from 01-download_data.py
 #   - data/01-raw_data/acs_state.parquet    from 01b-download_acs.py
 #   - data/01-raw_data/senate_results.csv   certified results, columns:
 #       year, st, dem_votes, rep_votes, other_votes
@@ -22,9 +23,17 @@
 #   - The 2026 features carry the 2024 CES (and 2024 ACS) forward: no 2026
 #     survey exists.
 #
-# Run with: uv run scripts/05-regression.py
+# Years: every even year found in the data is used (2016-2024 when the extra
+#   CES extract and ACS years are downloaded). Training sets always include
+#   2022, 2024 and 2022+2024, plus "midterms" and "all" when more cycles exist.
+#
+# Run with: uv run scripts/05-regression.py            (real data if present,
+#                                                       else simulated)
+#           uv run scripts/05-regression.py --source simulated
 
 #### Workspace setup ####
+import argparse
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -33,8 +42,7 @@ from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-RAW_DIR = Path("data/01-raw_data")
-OUT_DIR = Path("data/02-analysis_data")
+ROOT = Path(".")
 
 CLASSES = ["dem", "rep", "und"]  # und = Not Sure, No One, third party
 CES_FEATURES = [
@@ -45,7 +53,6 @@ ACS_FEATURES = [
     "acs_male", "acs_white", "acs_black", "acs_hispanic", "acs_college",
     "acs_median_age", "acs_log_income",
 ]  # fmt: skip
-TRAIN_SETS = {"2022": [2022], "2024": [2024], "2022+2024": [2022, 2024]}
 TARGET_YEAR = 2026
 FEATURE_YEAR = 2024  # CES / ACS year carried forward to 2026
 ALPHAS = np.logspace(-2, 3, 20)
@@ -56,6 +63,30 @@ SENATE_STATES_2026 = [
     "ME", "MA", "MI", "MN", "MS", "MT", "NE", "NH", "NJ", "NM", "NC", "OH", "OK",
     "OR", "RI", "SC", "SD", "TN", "TX", "VA", "WV", "WY",
 ]  # fmt: skip
+
+
+def paths(source: str) -> dict[str, Path]:
+    if source == "simulated":
+        d = ROOT / "data" / "00-simulated_data"
+        return {"ces": [d / "simulated_ces.parquet"], "acs": d / "simulated_acs.parquet",
+                "results": d / "simulated_senate_results.csv", "out": d}  # fmt: skip
+    raw = ROOT / "data" / "01-raw_data"
+    return {"ces": [raw / "ces_2016_2020.parquet", raw / "ces_2022_2024.parquet"],
+            "acs": raw / "acs_state.parquet", "results": raw / "senate_results.csv",
+            "out": ROOT / "data" / "02-analysis_data"}  # fmt: skip
+
+
+def train_sets(years: list[int]) -> dict[str, list[int]]:
+    """The user-requested sets (2022, 2024, 2022+2024), then wider ones if the data allow."""
+    sets = {str(y): [y] for y in (2022, 2024) if y in years}
+    if 2022 in years and 2024 in years:
+        sets["2022+2024"] = [2022, 2024]
+    midterms = [y for y in years if y % 4 == 2]
+    if len(midterms) > 1 and midterms not in sets.values():
+        sets["midterms"] = midterms
+    if len(years) > 2 and years not in sets.values():
+        sets["all"] = years
+    return sets
 
 
 #### Build the state table ####
@@ -134,14 +165,15 @@ def add_acs(table: pl.DataFrame, acs: pl.DataFrame | None, acs_year_for) -> pl.D
 
 
 def build_training_table(ces, acs=None, official=None) -> pl.DataFrame:
-    years = [2022, 2024]
+    # Only cycles where CES asked about the Senate race
+    years = sorted(ces.filter(pl.col("intent_sen").is_not_null())["year"].unique().to_list())
     table = pl.concat(
         [ces_features(ces, y).join(ces_targets(ces, y), on=["st", "year"]) for y in years]
     )
     table = add_acs(table, acs, lambda y: y)
     if official is not None:
         table = table.join(official, on=["st", "year"], how="left")
-    return table.with_columns(midterm=(pl.col("year") == 2022).cast(pl.Float64))
+    return table.with_columns(midterm=(pl.col("year") % 4 == 2).cast(pl.Float64))
 
 
 def build_target_table(ces, acs=None) -> pl.DataFrame:
@@ -204,33 +236,52 @@ def score(test: pl.DataFrame, pred: np.ndarray, baseline: np.ndarray) -> dict:
     return out
 
 
-def evaluate(table: pl.DataFrame, feature_sets: dict[str, list[str]]) -> pl.DataFrame:
+def evaluate(table: pl.DataFrame, feature_sets: dict[str, list[str]], sets: dict) -> pl.DataFrame:
     rows = []
     for fs_name, features in feature_sets.items():
-        for label, years in TRAIN_SETS.items():
-            train = table.filter(pl.col("year").is_in(years))
+        complete = table.drop_nulls(features)  # e.g. ACS missing for a year
+        for label, years in sets.items():
+            train = complete.filter(pl.col("year").is_in(years))
+            if train["st"].n_unique() < 10:
+                continue
             mean_shares = train.select(CLASSES).mean().to_numpy().ravel()
+            base = {"train": label, "features": fs_name}
             # Leave-one-state-out within the training cycles
             pred = leave_one_state_out(train, features)
-            rows.append({"train": label, "features": fs_name, "scheme": "leave-one-state-out",
+            rows.append({**base, "scheme": "leave-one-state-out",
                          **score(train, pred, mean_shares)})  # fmt: skip
-            # Out-of-cycle: a single-cycle model predicts the other cycle
             if len(years) == 1:
-                test = table.filter(~pl.col("year").is_in(years))
-                pred = fit_predict(train, test, features)
-                rows.append({"train": label, "features": fs_name,
-                             "scheme": f"predict {test['year'][0]}",
-                             **score(test, pred, mean_shares)})  # fmt: skip
+                # Out-of-cycle: a single-cycle model predicts every other cycle
+                test = complete.filter(~pl.col("year").is_in(years))
+                if test.height:
+                    pred = fit_predict(train, test, features)
+                    rows.append({**base, "scheme": "predict other years",
+                                 **score(test, pred, mean_shares)})  # fmt: skip
+            else:
+                # Leave-one-cycle-out: hold out each cycle in turn
+                held, preds = [], []
+                for y in years:
+                    sub = train.filter(pl.col("year") != y)
+                    test = train.filter(pl.col("year") == y)
+                    held.append(test)
+                    preds.append(fit_predict(sub, test, features))
+                rows.append({**base, "scheme": "leave-one-cycle-out",
+                             **score(pl.concat(held), np.vstack(preds), mean_shares)})  # fmt: skip
     return pl.DataFrame(rows)
 
 
-def forecast(table: pl.DataFrame, target: pl.DataFrame, feature_sets) -> pl.DataFrame:
+def forecast(table: pl.DataFrame, target: pl.DataFrame, feature_sets, sets: dict) -> pl.DataFrame:
     parts = []
     for fs_name, features in feature_sets.items():
-        for label, years in TRAIN_SETS.items():
-            pred = fit_predict(table.filter(pl.col("year").is_in(years)), target, features)
+        tgt = target.drop_nulls(features)
+        complete = table.drop_nulls(features)
+        for label, years in sets.items():
+            train = complete.filter(pl.col("year").is_in(years))
+            if train["st"].n_unique() < 10:
+                continue
+            pred = fit_predict(train, tgt, features)
             parts.append(
-                target.select("st").with_columns(
+                tgt.select("st").with_columns(
                     train=pl.lit(label),
                     features=pl.lit(fs_name),
                     p_dem=pl.Series(pred[:, 0]),
@@ -248,12 +299,22 @@ def forecast(table: pl.DataFrame, target: pl.DataFrame, feature_sets) -> pl.Data
     )  # fmt: skip
 
 
-#### Run ####
-if __name__ == "__main__":
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    ces = pl.read_parquet(RAW_DIR / "ces_2022_2024.parquet")
-    acs = load_acs(RAW_DIR / "acs_state.parquet")
-    official = load_official(RAW_DIR / "senate_results.csv")
+def load_script(name: str):
+    spec = importlib.util.spec_from_file_location("_s", Path(__file__).parent / name)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def run(source: str) -> tuple[pl.DataFrame, pl.DataFrame]:
+    p = paths(source)
+    if source == "simulated" and not p["ces"][0].exists():
+        load_script("00b-simulate_regression_inputs.py").simulate(p["out"])
+    p["out"].mkdir(parents=True, exist_ok=True)
+    ces = pl.concat([pl.read_parquet(f) for f in p["ces"] if f.exists()], how="diagonal_relaxed")
+    acs = load_acs(p["acs"])
+    official = load_official(p["results"])
+    print(f"Source: {source} | years: {sorted(ces['year'].unique().to_list())}")
     print(f"ACS features: {'yes' if acs is not None else 'NO (run 01b-download_acs.py)'}")
     print(f"Certified results: {'yes' if official is not None else 'NO (senate_results.csv missing)'}")
 
@@ -263,16 +324,29 @@ if __name__ == "__main__":
 
     table = build_training_table(ces, acs, official)
     target = build_target_table(ces, acs)
+    sets = train_sets(sorted(table["year"].unique().to_list()))
 
-    metrics = evaluate(table, feature_sets)
-    preds = forecast(table, target, feature_sets)
-    metrics.write_parquet(OUT_DIR / "regression_metrics.parquet")
-    preds.write_parquet(OUT_DIR / "regression_forecast_2026.parquet")
+    metrics = evaluate(table, feature_sets, sets)
+    preds = forecast(table, target, feature_sets, sets)
+    metrics.write_parquet(p["out"] / "regression_metrics.parquet")
+    preds.write_parquet(p["out"] / "regression_forecast_2026.parquet")
+    return metrics, preds
 
-    with pl.Config(tbl_rows=50, tbl_cols=20, fmt_float="mixed"):
+
+#### Run ####
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--source", choices=["real", "simulated"], default=None)
+    args = ap.parse_args()
+    source = args.source or (
+        "real" if paths("real")["ces"][-1].exists() else "simulated"
+    )
+    metrics, preds = run(source)
+    with pl.Config(tbl_rows=60, tbl_cols=20, fmt_float="mixed"):
         print(metrics.with_columns(pl.col(pl.Float64).round(2)))
-        wide = preds.filter(pl.col("features") == list(feature_sets)[-1]).pivot(
+        last = preds["features"].unique().sort()[-1]
+        wide = preds.filter(pl.col("features") == last).pivot(
             on="train", index="st", values="p_dem"
         ).sort("st")
-        print("\nPredicted Democratic share, by training set:")
+        print(f"\nPredicted Democratic share ({last} features), by training set:")
         print(wide.with_columns(pl.col(pl.Float64).round(3)))
