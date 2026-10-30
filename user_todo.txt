@@ -1,69 +1,58 @@
 USER TODO  (kept up to date by Claude; last updated 2026-10-30)
 =====================================================================
-Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your action.
+[DECIDE] = needs your choice.   [DO] = needs your action.
 
-[DONE] ACS downloaded (306 state-years, 2014-2024) with the activated Census key
-      (passed inline, never stored). data/01-raw_data/acs_state.parquet.
+OPEN
+[DECIDE] Open a pull request from Regression into main on BolongTang/US-midterms-2026-silicon-forecast-regression?
+      PRs #1 and #2 are merged; the newest work (leakage audit, baselines, previous-result features,
+      validation-based selection, midterm-only and direct models, candidate names, race cards, winner
+      map) is on the Regression branch only. Claude will not open one unless you say so.
 
-[DONE] CES 2014-2020 downloaded from Dataverse (data/01-raw_data/ces_2014_2020.parquet);
-      the real regression now runs on 2016-2024 (CES features only, no ACS yet).
+[DECIDE] Idaho, Nebraska and South Dakota have no Democratic nominee (independents Achilles, Osborn and
+      Bengs are the main challengers). The cards say "No Democratic nominee". Keep, or show the
+      independent as the Republican's opponent?
 
-[DONE] Certified Senate results downloaded from MIT Election Lab via Dataverse
-      (scripts/01c-download_results.py -> data/01-raw_data/senate_results.csv, 189
-      state-races, 2014-2024). Review the selection rules at the top of that script.
+[DECIDE] Candidate characteristics (race, gender, incumbency) as model features were NOT built: no open
+      dataset covers them for both major-party Senate candidates, 2014-2024 plus the 2026 field.
+      (FEC bulk files flag incumbent/challenger/open status only; congress-legislators gives gender only
+      for people who served; Ballotpedia, OpenSecrets and CAWP bulk data are not openly downloadable;
+      Dataverse has nothing suitable.) Offer: add an incumbency-only feature (FEC, or the previous winner
+      of the seat). Want it?
 
-[DONE] The Quarto page (paper/regression.qmd) now runs on REAL data (SOURCE = "real") and
-      is rendered to docs/. Real figures: paper/figures/real_*.png.
+[DECIDE] Midterm swing for 2026: the model learns a midterm effect only from midterm cycles (2014, 2018,
+      2022). Add a manual adjustment (for example plus/minus X points toward the out-party)? Default: none.
 
-[DONE] Headline model is now chosen by validation performance (ces+prior, all earlier cycles),
-      reported on the untouched 2024 holdout. Tell Claude if you prefer a different rule.
+[DECIDE] paper/index.qmd (the LLM-forecast page) is still the course template with placeholders (TITLE,
+      AUTHOR 1...). Whose section is it, and should Claude fill it?
 
-[DECIDE] Midterm swing for 2026: the model learns a midterm effect only from
-      midterm cycles (2018, 2022, ...). Do you want a manual adjustment
-      (e.g. +/- X points toward the out-party)?  Default: none.
+[DO]  Run `uv lock` locally and commit uv.lock (scikit-learn and Pillow-dependent plotting were added;
+      uv sync was too slow in Claude's sandbox).
 
-[DECIDE] Open a pull request from Regression into main? (Claude will not open one
-      unless you say so.)
+[DO]  Re-run scripts/01e-download_candidates.py close to election day, then re-render the site: the
+      nominee lists come from Wikipedia race infoboxes (CC BY-SA) and can change (replacements are
+      already visible in Maine and South Carolina).
 
-[DO]  Run `uv lock` locally and commit uv.lock (scikit-learn was added to
-      pyproject.toml; uv sync was too slow in Claude's sandbox).
+[DO]  Optional: quarto warns about output-dir ../docs when rendering paper/ (project dir is paper/).
+      Harmless; to silence it, move _quarto.yml to the repo root.
 
-[DECIDE] GitHub: the branch Regression is pushed to
-      https://github.com/BolongTang/US-midterms-2026-silicon-forecast-regression
-      (not to harryyz/..., whose connector access is still read-only). Origin in the
-      sandbox now points at that repo too. Open a PR there, or get write access to harryyz's
-      repo and have Claude push to it? (Claude will not open a PR unless asked.)
+[DO]  Optional: harryyz/US-midterms-2026-silicon-forecast is still read-only for Claude's GitHub
+      connector, so Claude pushes to the BolongTang repo. To push to harryyz's, grant the Claude app
+      write access there.
 
-[DECIDE] paper/index.qmd (LLM forecast page) is still the course template with
-      placeholders (TITLE, AUTHOR 1...). Whose section is it, and should Claude fill it?
-
-[DO]  quarto warns about output-dir ../docs when rendering paper/ (project dir is paper/).
-      Harmless here; to silence it, move _quarto.yml to the repo root.
-
-[DECIDE] Which training set should headline the 2026 forecast? Real-data accuracy favors
-      'all' (six cycles) and 2022+2024; Claude's page still headlines 2022+2024 (your
-      requested pair). Switch to 'all'?
-
-[DECIDE] Possible next step: model the two-party Democratic share directly (e.g. regress it
-      on previous results) instead of the three-way log-ratio; the raw 'last presidential
-      result' baseline has lower error than the ridge on the same information.
-
-[DECIDE] Non-caucusing independents and third parties are still lumped with Undecided in the
-      three-way target (caveats.txt #3). Keep, or split 'Undecided' from 'Other/third party'?
-
-[DONE, per your instructions] (1) Independents who caucus with a party are coded by party in the
-      certified results (King ME, Sanders VT -> Democrat; Osborn NE does not caucus, so he stays
-      'other' and NE 2024's regular race has no Democrat). CES already codes King/Sanders as
-      Democratic. (2) Special and regular races are treated alike and pooled (GA 2020 etc.).
-      (3) Midterm-only models (2014, 2018, 2022) fitted and used to predict 2026; they do worse than
-      all-cycle models. (4) The headline trains on all six cycles; the feature set is chosen by
-      validation (ces+acs, a near-tie with ces+prior).
-      Please confirm Osborn: if you want him treated as Democratic-aligned, say so (it is a
-      one-line change in scripts/01c-download_results.py: CAUCUS_PARTY).
-
-Done so far (for reference):
-  - Leakage audit + fixes, simple baselines, CES 2012 / ACS 2012 / presidential results.
-  - Regression pipeline, ACS downloader (with API-key slot), simulator, tests.
-  - Pipeline runs on simulated data via --source simulated.
-  - Figures (scripts/06) and Quarto page (paper/regression.qmd, rendered to docs/).
-  - origin now points at BolongTang/US-midterms-2026-silicon-forecast-regression.
+DONE (your decisions and requests, newest first)
+ - Osborn stays "other"; Undecided is not split from third parties.
+ - Direct two-party model built (ridge on the logit of the certified Dem two-party share).
+ - Website: a red-blue bar card per race, three per line, with nominee names, incumbency, percentages
+   and portraits (winner's portrait larger); a USA map (blue Dem win, red Rep win, grey no race) with
+   the winner's surname in each state. Portraits are official Bioguide/congress.gov photos, available
+   only for current or former members of Congress (33 of 75 candidates); others show initials.
+ - Headline trains on all six cycles; feature set chosen by validation (ces+acs, a near-tie with
+   ces+prior); reported on the untouched 2024 holdout.
+ - Midterm-only models (2014, 2018, 2022 -> 2026) fitted; they do worse than all-cycle models.
+ - Independents who caucus with a party coded by party (King, Sanders -> Democrat); special and regular
+   races treated alike (pooled).
+ - Previous presidential and Senate results added as features (prior, ces+prior).
+ - Simple baselines (party ID, last results, majority class, mean share) and the leakage audit.
+ - All data downloaded: CES 2012-2024 (ces_2012_2020.parquet, ces_2022_2024.parquet), ACS 2012-2024
+   (357 state-years), certified Senate results (191 state-races, 2014-2024), presidential results,
+   2026 candidates and portraits. The Census key was passed inline and never stored.

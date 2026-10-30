@@ -1,4 +1,4 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (coding decisions, midterm-only models, all-cycle headline))
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (direct model, candidate names, race cards and winner map))
 =====================================================================
 Goal: forecast every 2026 US Senate race (35 contests) with a state-level
 regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
@@ -24,14 +24,16 @@ Method (scripts/05-regression.py)
 Files
  scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
  scripts/01-download_data.py                CES 2012-2024 (2012-2020 -> ces_2012_2020.parquet)
-  scripts/01d-download_president.py          certified presidential results 2008-2024 (baseline)
+  scripts/01e-download_candidates.py         2026 nominees (Wikipedia infoboxes) + official portraits (Bioguide)
+ scripts/07-race_views.py                   race cards (red-blue bar, portraits) and USA winner map
+ scripts/01d-download_president.py          certified presidential results 2008-2024 (baseline)
  scripts/01c-download_results.py            certified Senate results 2014-2024 (MIT Election Lab)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
  scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
  paper/regression.qmd                       Quarto page on the regression forecast (SOURCE switch)
  docs/                                      rendered site (quarto render paper)
- tests/test_regression.py, test_figures.py unit + simulated end-to-end + real-data tests
+ tests/test_regression.py, test_figures.py, test_results.py, test_race_views.py unit + simulated end-to-end + real-data tests
  data/02-analysis_data/regression_*.parquet real-data outputs (CES features only so far)
  data/00-simulated_data/regression_*.parquet simulated-data outputs
  user_todo.txt / caveats.txt / summary.txt  tracking files (this one included)
@@ -60,8 +62,19 @@ Status (real data, CES 2012-2024, ACS, certified Senate + presidential results)
  - MIDTERM-ONLY MODELS (fit on 2014, 2018, 2022; predict 2026): worse than all-cycle models on the
    same later midterms (pooled ces+acs 6.3 vs 5.1 pp; ces 6.1 vs 4.9), because they train on only
    one or two cycles. For 2026 they flip no winners relative to the headline (35 races compared).
- - 2026 forecast (headline): 14 Democratic, 21 Republican wins; every race has D/R/Undecided
-   percentages summing to 100% under every feature set and training set.
+ - DIRECT TWO-PARTY MODEL (additional result): ridge on the logit of the certified Dem two-party share.
+   Forward-chaining, all cycles, lagged: ces 5.1 pp / 90% winners, ces+acs 5.0 / 89%, prior 5.2 / 86%,
+   ces+prior 5.0 / 89% (three-way: 5.6 / 89%, 5.5 / 89%, 5.0 / 89%, 4.9 / 89%). On the 141 common
+   races it is slightly better than three-way for survey-only features and about equal otherwise;
+   still not clearly past the best baseline. For 2026 (ces+acs) it differs from the headline by 1.9
+   points on average and flips 2 races (MI, NC).
+ - CANDIDATE CHARACTERISTICS (race, gender, incumbency) as features: not built; no open dataset covers
+   them (see user_todo.txt). Nominee names/incumbency/portraits are used for display only.
+ - WEBSITE: every one of the 35 races shows nominee names, incumbency, two-party and three-way
+   percentages, a red-blue bar (three cards per line, winner's portrait larger) and a USA map with
+   the predicted winner's surname (blue Dem, red Rep, grey no race).
+ - 2026 forecast (headline ces+acs, all six cycles): 14 Democratic, 21 Republican wins; every race has
+   D/R/Undecided percentages summing to 100% under every feature set and training set.
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)

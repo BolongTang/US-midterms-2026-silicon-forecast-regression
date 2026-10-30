@@ -70,6 +70,21 @@ MIDTERM-ONLY MODELS AND HEADLINE
 25. The headline feature set (ces+acs) beat ces+prior on validation by 0.05 pp: a tie. The
     choice among feature sets is not statistically meaningful; averaging models would be safer.
 
+WEBSITE / CANDIDATES
+26. Nominee names, incumbency and party come from Wikipedia race infoboxes at download time (CC BY-SA),
+    citing state election offices; they can change before election day. A few replacements are
+    already visible (Maine, South Carolina).
+27. Official portraits exist only for current or former members of Congress (33 of 75 candidates,
+    matched by name within the state). Challengers without congressional service show initials.
+    A name match could in principle pick the wrong person; same-state last-name and first-name
+    checks make that unlikely but it is not verified by hand.
+28. The winner shown in each race is the nominee of the predicted-winning PARTY. The model predicts
+    party vote shares, not candidates; it knows nothing about who the nominees are.
+29. Idaho, Nebraska and South Dakota have no Democratic nominee; a predicted Democratic share there is
+    the generic Democratic vote. A predicted 'Democratic win' in such a state would have no named winner.
+30. The winner map uses an Albers projection with Alaska and Hawaii as insets drawn from a public-domain
+    state outline file; small states are labelled beside the map with leader lines.
+
 SIMULATED DATA
 14. Simulated results (data/00-simulated_data/) come from a known generating
     process. High accuracy there shows the code works; it says nothing about

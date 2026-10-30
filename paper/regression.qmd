@@ -32,6 +32,13 @@ headline = res["headline_train"]  # chosen by validation (see "How the headline 
 fs = res["oos_features"]
 head = figs.pick(preds, headline, fs)
 
+vspec = importlib.util.spec_from_file_location("views", Path("..") / "scripts" / "07-race_views.py")
+views = importlib.util.module_from_spec(vspec)
+vspec.loader.exec_module(views)
+# Nominee names come from the 2026 candidate list, which is real; they are only paired with
+# real-data predictions (simulated predictions would attach real names to made-up numbers).
+races = views.build_races(preds.filter(pl.col("train") == headline, pl.col("features") == fs), views.load_candidates()) if SOURCE == "real" else None
+
 
 def table(df: pd.DataFrame, **fmt):
     display(HTML(df.to_html(index=False, border=0, classes="table table-sm", na_rep="–", float_format=lambda v: f"{v:.1f}")))
@@ -72,17 +79,40 @@ print(f"""- **Coverage:** {n_states} of 35 Senate races have a predicted Democra
   party identification (features: `{fs}`), trained on {', '.join(sorted(preds['train'].unique().to_list()))}.
 - **Predicted winners (model trained on {headline}):** {int((head['winner'] == 'Democratic').sum())} Democratic,
   {int((head['winner'] == 'Republican').sum())} Republican.
+- **Who wins:** every race below names the nominee of the predicted-winning party, with the
+  percentages, in a card per state and on a map.
 - **Vote counts:** Senate seats are decided by statewide popular vote, so a state's vote share is
   the right quantity to predict; there is no Electoral College.""")
 ```
 
-# Forecast
+# Race-by-race forecast
+
+One card per race. The bar shows the predicted Democratic (blue) and Republican (red) share of the two-party
+vote; the predicted winner's portrait is larger. Below the bar, the three-way shares include the undecided.
+Official portraits exist only for people who serve or have served in Congress; other nominees show initials.
+Idaho, Nebraska and South Dakota have no Democratic nominee on the ballot (independents are the main challengers),
+so a predicted Democratic share there means the generic Democratic vote.
 
 ```{python}
-#| fig-cap: "Predicted Democratic share of the two-party vote, tile map of states."
-#| fig-alt: "Tile map of the United States coloured from red to blue by predicted Democratic two-party share in each 2026 Senate race."
-plots["forecast_map"]
+if races is not None:
+    display(HTML(views.cards_html(races)))
+else:
+    display(Markdown("*Race cards are shown only for real-data runs.*"))
 ```
+
+# Map of predicted winners
+
+Blue: a Democrat is predicted to win; red: a Republican; grey: no Senate race in 2026. Each state shows the surname of
+the predicted winner (the nominee of the winning party).
+
+```{python}
+if races is not None:
+    display(HTML(views.figure_html(views.winner_map(races), "Map of the United States. States with a 2026 Senate race are blue where a Democrat is predicted to win and red where a Republican is, each labelled with the predicted winner's surname; states with no race are grey.")))
+else:
+    display(Markdown("*The map is shown only for real-data runs.*"))
+```
+
+# More views of the forecast
 
 ```{python}
 #| fig-cap: "Predicted Democratic, Republican and Undecided shares in every 2026 race."
@@ -98,7 +128,12 @@ Percentages for every race (model trained on `{python} headline`, features `{pyt
 t = head.sort_values("st")[["st", "p_dem", "p_rep", "p_und", "dem2p", "winner"]].copy()
 for c in ["p_dem", "p_rep", "p_und", "dem2p"]:
     t[c] = pct(t[c])
-t.columns = ["State", "Democratic %", "Republican %", "Undecided/other %", "Dem two-party %", "Predicted winner"]
+t.columns = ["State", "Democratic %", "Republican %", "Undecided/other %", "Dem two-party %", "Predicted winner (party)"]
+if races is not None:
+    nm = {r["st"]: (r["dem"]["name"] if r["dem"] else "none", r["rep"]["name"] if r["rep"] else "none", r["winner_name"]) for r in races}
+    t.insert(1, "Democratic nominee", t["State"].map(lambda s: nm[s][0]))
+    t.insert(2, "Republican nominee", t["State"].map(lambda s: nm[s][1]))
+    t["Predicted winner"] = t["State"].map(lambda s: nm[s][2])
 table(t)
 ```
 
@@ -345,6 +380,34 @@ cycles and about 33 races each, differences of a point or so between candidates 
 several good models would be a reasonable next step.""")
 ```
 
+# Direct two-party model
+
+The main model predicts the survey's three-way split and then reads off the two-party share. A second model
+predicts the **certified Democratic share of the two-party vote directly**: a ridge regression on its logit, fit on
+earlier cycles' real results, using the same features. It cannot say anything about Undecided, but it targets the
+quantity that decides the race.
+
+```{python}
+dm = res["direct_metrics"].filter(pl.col("timing") == "lagged", pl.col("train") == "all", pl.col("scheme") == "forward-chaining").select(
+    pl.col("features").alias("Features"), pl.lit("direct two-party").alias("Model"), pl.col("n").alias("Races"),
+    pl.col("official_mae_dem2p").alias("Dem two-party error (pp)"), (100 * pl.col("official_winner_acc")).alias("Winners correct (%)"))
+tw = metrics_lag.filter(pl.col("train") == "all", pl.col("scheme") == "forward-chaining").select(
+    pl.col("features").alias("Features"), pl.lit("three-way").alias("Model"), pl.col("n").alias("Races"),
+    pl.col("official_mae_dem2p").alias("Dem two-party error (pp)"), (100 * pl.col("official_winner_acc")).alias("Winners correct (%)"))
+table(pl.concat([tw, dm]).sort("Features", "Model").to_pandas())
+```
+
+```{python}
+#| output: asis
+d26 = res["direct_preds"].filter(pl.col("train") == headline, pl.col("features") == fs).select("st", pl.col("dem2p").alias("direct"))
+cmp = head[["st", "dem2p"]].merge(d26.to_pandas(), on="st")
+flips = int(((cmp["dem2p"] > 0.5) != (cmp["direct"] > 0.5)).sum())
+gap = float((100 * (cmp["dem2p"] - cmp["direct"]).abs()).mean())
+print(f"""**Reading.** On the same forward-chaining test (all cycles, lagged features) the direct model is a little more accurate than the
+three-way model with survey-only features and about equal once previous results are included. For 2026 with `{fs}` features it
+differs from the headline by {gap:.1f} points on average and calls {flips} of {len(cmp)} races differently.""")
+```
+
 # Midterm-only models
 
 Midterm electorates differ from presidential-year ones, so a second family of models is fit on **midterm cycles
@@ -391,6 +454,10 @@ plots["midterm_vs_all"]
    and sum to one.
 4. **Penalty:** ridge, chosen by leave-one-out cross-validation.
 5. **2026 features:** no 2026 survey exists, so the 2024 profiles are carried forward.
+6. **Candidate characteristics are not modelled.** A search found no open dataset covering candidates' race, gender
+   and incumbency for both major-party Senate candidates across 2014-2024 (the FEC flags incumbency but not race or
+   gender; Ballotpedia and OpenSecrets are not open). The 2026 nominee names, incumbency and portraits on this page
+   are used for display only, not as model inputs.
 
 Run the whole pipeline with `uv run scripts/05-regression.py` and rebuild the figures with
 `uv run scripts/06-make_figures.py`.
@@ -400,7 +467,7 @@ Run the whole pipeline with `uv run scripts/05-regression.py` and rebuild the fi
 - Targets are survey *intent*, not votes; "Undecided" includes Not Sure, No One and third-party answers.
 - State profiles come from survey samples; small states have few respondents.
 - Party-identification features come from the same respondents as the targets.
-- No candidate information (incumbency, quality, spending) and no uncertainty intervals yet.
+- No candidate-level model inputs (race, gender, incumbency, quality, spending; no open dataset) and no uncertainty intervals yet.
 - Independents who caucus with a party (e.g. Maine, Vermont) are coded by party label.
 
 The full list is in `caveats.txt` in the repository.

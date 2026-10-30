@@ -282,3 +282,28 @@ def test_midterm_only_models_train_on_midterm_cycles_only(tmp_path, monkeypatch)
     f = out["preds"].filter(pl.col("train") == "midterms")
     assert f["st"].n_unique() == len(reg.SENATE_STATES_2026)
     assert set(f["features"]) == set(out["feature_sets"])
+
+
+#### Direct two-party model ####
+def test_direct_model_recovers_logit_share_and_returns_a_valid_pair():
+    rng = np.random.default_rng(2)
+    x = rng.uniform(-1, 1, 80)
+    share = 1 / (1 + np.exp(-(1.5 * x)))
+    df = pl.DataFrame({"x": x, "official_dem2p": share})
+    pred = reg.fit_predict_direct(df[:60], df[60:], ["x"])
+    assert pred[:, 0] == pytest.approx(share[60:], abs=0.03)
+    assert (pred[:, 0] + pred[:, 1] == pytest.approx(1.0)) and (pred[:, 2] == 0).all()
+
+
+def test_direct_model_runs_on_simulated_data_and_covers_every_race(tmp_path, monkeypatch):
+    out = run_simulated(tmp_path, monkeypatch)
+    dm, dp = out["direct_metrics"], out["direct_preds"]
+    assert set(dm["features"]) == set(out["feature_sets"]) and {reg.LOSO, reg.FORWARD} == set(dm["scheme"])
+    assert dm["mae_dem"].is_null().all()  # survey-only metrics do not apply
+    assert dm["official_mae_dem2p"].is_not_null().all()
+    assert dp.group_by("features", "train").agg(n=pl.col("st").n_unique())["n"].to_list() == [len(reg.SENATE_STATES_2026)] * (len(out["feature_sets"]) * len(out["sets"]))
+    assert dp["dem2p"].is_between(0, 1).all()
+    assert any(m.startswith("ridge direct two-party") for m in out["comparison"]["method"].unique())
+    # simulated lean persists, so the direct model should call most winners
+    fwd = dm.filter(pl.col("scheme") == reg.FORWARD, pl.col("timing") == "lagged", pl.col("train") == "all")
+    assert (fwd["official_winner_acc"] > 0.85).all()

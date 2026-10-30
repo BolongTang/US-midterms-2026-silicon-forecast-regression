@@ -47,6 +47,8 @@
 # Model selection: the headline model is chosen by validation-cycle error and reported
 #   on an untouched holdout cycle (select_model). The training window is fixed to all
 #   cycles by decision, so selection is among feature sets; other windows are shown.
+# Direct two-party model: ridge on the logit of the certified Democratic two-party share
+#   (fit_predict_direct), as an additional regression result next to the three-way model.
 # Midterm-only models: fit only on midterm cycles (2014, 2018, 2022) and compared with
 #   all-cycle models on the same midterm test cycles (compare_midterm).
 #
@@ -288,11 +290,23 @@ def fit_predict(train: pl.DataFrame, test: pl.DataFrame, features: list[str]) ->
     return from_alr(model.predict(test.select(features).to_numpy()))
 
 
+def fit_predict_direct(train: pl.DataFrame, test: pl.DataFrame, features: list[str]) -> np.ndarray:
+    """DIRECT two-party model: ridge on the logit of the certified Democratic share of the
+    two-party vote (not the survey's three-way split). Returned as (n, 3) = [dem2p, 1 - dem2p, 0]
+    so that score() and the cross-validation helpers work unchanged. Rows without a
+    certified result cannot train it."""
+    d = np.clip(train["official_dem2p"].to_numpy().astype(float), 0.02, 0.98)
+    model = make_pipeline(StandardScaler(), RidgeCV(alphas=ALPHAS))
+    model.fit(train.select(features).to_numpy(), np.log(d / (1 - d)))
+    p = 1 / (1 + np.exp(-model.predict(test.select(features).to_numpy())))
+    return np.column_stack([p, 1 - p, np.zeros(len(p))])
+
+
 def mean_shares(train: pl.DataFrame, n: int) -> np.ndarray:
     return np.tile(train.select(CLASSES).mean().to_numpy().ravel(), (n, 1))
 
 
-def leave_one_state_out(table: pl.DataFrame, features: list[str]):
+def leave_one_state_out(table: pl.DataFrame, features: list[str], fit=None):
     """Predict each row from a model that never saw that state (in any cycle), with
     the mean-share baseline computed on the same training fold. OPTIMISTIC: the other
     states of the same cycle are in the training data."""
@@ -301,12 +315,12 @@ def leave_one_state_out(table: pl.DataFrame, features: list[str]):
     for s in np.unique(states):
         held = pl.Series(states == s)
         train, test = table.filter(~held), table.filter(held)
-        pred[held.to_numpy()] = fit_predict(train, test, features)
+        pred[held.to_numpy()] = (fit or fit_predict)(train, test, features)
         base[held.to_numpy()] = mean_shares(train, test.height)
     return pred, base
 
 
-def forward_chaining(table: pl.DataFrame, features: list[str], years: list[int], min_states: int = 10):
+def forward_chaining(table: pl.DataFrame, features: list[str], years: list[int], min_states: int = 10, fit=None):
     """Train only on EARLIER cycles of `years`, predict the next one. A single-cycle
     set predicts every later cycle in the table. Returns (test rows, predictions,
     fold baselines) pooled over test cycles, or None."""
@@ -322,7 +336,7 @@ def forward_chaining(table: pl.DataFrame, features: list[str], years: list[int],
         if train["st"].n_unique() < min_states or test.height == 0:
             continue
         held.append(test)
-        preds.append(fit_predict(train, test, features))
+        preds.append((fit or fit_predict)(train, test, features))
         bases.append(mean_shares(train, test.height))
     if not held:
         return None
@@ -403,6 +417,47 @@ def forecast(table: pl.DataFrame, target: pl.DataFrame, feature_sets, sets: dict
     )  # fmt: skip
 
 
+SURVEY_ONLY = ["mae_dem", "mae_rep", "mae_und", "baseline_mae_dem", "winner_acc_ces"]  # meaningless for the direct model
+
+
+def evaluate_direct(tables: dict, feature_sets: dict[str, list[str]], sets: dict) -> pl.DataFrame:
+    """Same schemes as evaluate(), for the direct two-party model; only the certified-result
+    metrics apply, and only races with a certified result can train or be scored."""
+    rows = []
+    for timing, table in tables.items():
+        for fs_name, features in feature_sets.items():
+            complete = table.drop_nulls(features + ["official_dem2p"])
+            for label, years in sets.items():
+                train = complete.filter(pl.col("year").is_in(years))
+                if train["st"].n_unique() < 10:
+                    continue
+                base = {"timing": timing, "train": label, "features": fs_name}
+                pred, bl = leave_one_state_out(train, features, fit=fit_predict_direct)
+                rows.append({**base, "scheme": LOSO, **score(train, pred, bl)})
+                if (fc := forward_chaining(complete, features, years, fit=fit_predict_direct)) is not None:
+                    rows.append({**base, "scheme": FORWARD, **score(*fc)})
+    return pl.DataFrame(rows).with_columns([pl.lit(None, dtype=pl.Float64).alias(c) for c in SURVEY_ONLY])
+
+
+def forecast_direct(table: pl.DataFrame, target: pl.DataFrame, feature_sets, sets: dict) -> pl.DataFrame:
+    """2026 two-party forecast from the direct model, trained on the LAGGED table."""
+    parts = []
+    for fs_name, features in feature_sets.items():
+        tgt = target.drop_nulls(features)
+        complete = table.drop_nulls(features + ["official_dem2p"])
+        for label, years in sets.items():
+            train = complete.filter(pl.col("year").is_in(years))
+            if train["st"].n_unique() < 10:
+                continue
+            p = fit_predict_direct(train, tgt, features)[:, 0]
+            parts.append(tgt.select("st").with_columns(train=pl.lit(label), features=pl.lit(fs_name), dem2p=pl.Series(p)))
+    return (
+        pl.concat(parts)
+        .with_columns(winner=pl.when(pl.col("dem2p") > 0.5).then(pl.lit("Democratic")).otherwise(pl.lit("Republican")))
+        .sort("st", "features", "train")
+    )
+
+
 #### Simple baselines ####
 # Ideas considered, in order of how little they assume:
 #   1. party-ID majority (pid3): the party with more self-identifiers in the state wins
@@ -465,6 +520,12 @@ def compare_by_year(tables: dict, feature_sets: dict[str, list[str]]) -> pl.Data
                     full = np.full(test.height, np.nan)
                     full[np.isin(test["st"].to_numpy(), comp_test["st"].to_numpy())] = p[:, 0] / (p[:, 0] + p[:, 1])
                     record(f"ridge, all earlier cycles ({fs_name})", full)
+                comp_train = train_all.drop_nulls(features + ["official_dem2p"])
+                if "official_dem2p" in train_all.columns and comp_train["st"].n_unique() >= 10 and comp_test.height:
+                    p = fit_predict_direct(comp_train, comp_test, features)[:, 0]
+                    full = np.full(test.height, np.nan)
+                    full[np.isin(test["st"].to_numpy(), comp_test["st"].to_numpy())] = p
+                    record(f"ridge direct two-party, all earlier cycles ({fs_name})", full)
             for name in BASELINES:
                 record(f"baseline: {name}", baseline_dem2p(name, test, train_all), has_share=name != "majority class")
     return pl.DataFrame(rows, schema_overrides={"pred_dem2p": pl.Float64, "official_dem2p": pl.Float64})
@@ -621,6 +682,10 @@ def run(source: str) -> dict:
     preds = forecast(lagged, target, feature_sets, sets)
     comparison = compare_by_year(tables, feature_sets)
     base_forecast = forecast_baselines(target, lagged)
+    direct_metrics = evaluate_direct(tables, feature_sets, sets)
+    direct_preds = forecast_direct(lagged, target, feature_sets, sets)
+    direct_metrics.write_parquet(p["out"] / "direct_metrics.parquet")
+    direct_preds.write_parquet(p["out"] / "direct_forecast_2026.parquet")
     midterm = compare_midterm(lagged, feature_sets)
     midterm.write_parquet(p["out"] / "midterm_comparison.parquet")
     selection, (sel_fs, sel_window) = select_model(lagged, feature_sets)
@@ -632,6 +697,7 @@ def run(source: str) -> dict:
     return {"metrics": metrics, "preds": preds, "comparison": comparison,
             "baseline_forecast": base_forecast, "tables": tables, "sets": sets,
             "selection": selection, "selected": (sel_fs, sel_window), "midterm": midterm,
+            "direct_metrics": direct_metrics, "direct_preds": direct_preds,
             "headline_train": headline_label(sel_window, sets, years),
             "feature_sets": feature_sets, "paths": p}  # fmt: skip
 

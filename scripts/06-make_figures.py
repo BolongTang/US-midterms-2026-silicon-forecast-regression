@@ -87,7 +87,8 @@ def load(source: str = "simulated", root: Path = Path(".")) -> dict:
             "summary": summary, "by_year": reg.summarise_comparison(out["comparison"], by_year=True),
             "baseline_forecast": out["baseline_forecast"], "oos": oos, "source": source,
             "oos_label": label, "oos_features": fs, "selection": out["selection"],
-            "selected": out["selected"], "headline_train": out["headline_train"], "midterm": out["midterm"], "has_official": has_official}  # fmt: skip
+            "selected": out["selected"], "headline_train": out["headline_train"], "midterm": out["midterm"],
+            "direct_metrics": out["direct_metrics"], "direct_preds": out["direct_preds"], "has_official": has_official}  # fmt: skip
 
 
 def pick(preds: pl.DataFrame, train: str, features: str | None = None) -> pd.DataFrame:
