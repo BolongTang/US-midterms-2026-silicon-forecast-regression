@@ -130,6 +130,7 @@ ul.task-list li input[type="checkbox"] {
   </ul></li>
   <li><a href="#does-the-training-set-matter" id="toc-does-the-training-set-matter" class="nav-link" data-scroll-target="#does-the-training-set-matter">Does the training set matter?</a></li>
   <li><a href="#accuracy" id="toc-accuracy" class="nav-link" data-scroll-target="#accuracy">Accuracy</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
   <li><a href="#method" id="toc-method" class="nav-link" data-scroll-target="#method">Method</a></li>
   <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats">Caveats</a></li>
   </ul>
@@ -170,17 +171,17 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Warning</span>Synthetic data
+<span class="screen-reader-only">Note</span>Real data
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Every number and figure on this page comes from <strong>simulated</strong> survey, census and election inputs with a known structure (<code>scripts/00b-simulate_regression_inputs.py</code>). They show that the pipeline works end to end. They say nothing about the real 2026 races. Set <code>SOURCE = "real"</code> in this page’s first code chunk once the real data are in place.</p>
+<p>Features come from the Cooperative Election Study (CES, 2016-2024) and the Census ACS 5-year estimates. Targets are CES pre-election Senate intent; accuracy is also checked against certified results from the MIT Election Lab. No 2026 survey exists, so 2026 features carry the 2024 profiles forward.</p>
 </div>
 </div>
 <section id="summary" class="level1">
@@ -188,13 +189,13 @@ ul.task-list li input[type="checkbox"] {
 <ul>
 <li><strong>Coverage:</strong> 35 of 35 Senate races have a predicted Democratic, Republican and Undecided share; the three shares sum to 100% in every state (checked).</li>
 <li><strong>Model:</strong> ridge regression on log-ratios of the three shares, using state demographics and party identification (features: <code>ces+acs</code>), trained on 2022, 2022+2024, 2024, all, midterms.</li>
-<li><strong>Predicted winners (model trained on 2022+2024):</strong> 11 Democratic, 24 Republican.</li>
+<li><strong>Predicted winners (model trained on 2022+2024):</strong> 13 Democratic, 22 Republican.</li>
 <li><strong>Vote counts:</strong> Senate seats are decided by statewide popular vote, so a state’s vote share is the right quantity to predict; there is no Electoral College.</li>
 </ul>
 </section>
 <section id="forecast" class="level1">
 <h1>Forecast</h1>
-<div id="b542577e" class="cell" data-execution_count="4">
+<div id="396c1d71" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -211,7 +212,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="22437d05" class="cell" data-execution_count="5">
+<div id="277488fe" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -231,7 +232,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="table-of-predictions" class="level2">
 <h2 class="anchored" data-anchor-id="table-of-predictions">Table of predictions</h2>
 <p>Percentages for every race (model trained on 2022+2024, features ces+acs).</p>
-<div id="5fd2b956" class="cell" data-execution_count="6">
+<div id="df6c0bb0" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -247,282 +248,282 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td>AK</td>
-<td>37.3</td>
-<td>53.7</td>
-<td>9.0</td>
-<td>41.0</td>
+<td>13.9</td>
+<td>46.3</td>
+<td>39.9</td>
+<td>23.1</td>
 <td>Republican</td>
 </tr>
 <tr class="even">
 <td>AL</td>
-<td>65.8</td>
-<td>24.0</td>
-<td>10.2</td>
-<td>73.3</td>
-<td>Democratic</td>
+<td>29.4</td>
+<td>40.8</td>
+<td>29.8</td>
+<td>41.8</td>
+<td>Republican</td>
 </tr>
 <tr class="odd">
 <td>AR</td>
-<td>50.3</td>
-<td>38.5</td>
-<td>11.1</td>
-<td>56.6</td>
-<td>Democratic</td>
+<td>20.7</td>
+<td>46.4</td>
+<td>32.9</td>
+<td>30.9</td>
+<td>Republican</td>
 </tr>
 <tr class="even">
 <td>CO</td>
-<td>51.4</td>
-<td>36.1</td>
-<td>12.4</td>
-<td>58.7</td>
+<td>37.5</td>
+<td>34.7</td>
+<td>27.8</td>
+<td>52.0</td>
 <td>Democratic</td>
 </tr>
 <tr class="odd">
 <td>DE</td>
-<td>33.9</td>
-<td>54.1</td>
-<td>12.0</td>
-<td>38.5</td>
-<td>Republican</td>
+<td>52.2</td>
+<td>26.6</td>
+<td>21.2</td>
+<td>66.3</td>
+<td>Democratic</td>
 </tr>
 <tr class="even">
 <td>FL</td>
-<td>50.6</td>
-<td>38.5</td>
-<td>10.9</td>
-<td>56.8</td>
-<td>Democratic</td>
-</tr>
-<tr class="odd">
-<td>GA</td>
-<td>47.4</td>
-<td>40.1</td>
-<td>12.4</td>
-<td>54.2</td>
-<td>Democratic</td>
-</tr>
-<tr class="even">
-<td>IA</td>
-<td>19.7</td>
-<td>69.6</td>
-<td>10.7</td>
-<td>22.1</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>ID</td>
-<td>34.6</td>
-<td>52.5</td>
-<td>12.9</td>
-<td>39.7</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>IL</td>
-<td>32.2</td>
-<td>56.3</td>
-<td>11.5</td>
-<td>36.4</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>KS</td>
-<td>31.4</td>
-<td>57.1</td>
-<td>11.5</td>
-<td>35.4</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>KY</td>
-<td>40.4</td>
-<td>48.1</td>
-<td>11.5</td>
-<td>45.7</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>LA</td>
-<td>22.6</td>
-<td>67.4</td>
-<td>10.0</td>
-<td>25.1</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>MA</td>
-<td>27.6</td>
-<td>62.3</td>
-<td>10.1</td>
-<td>30.7</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>ME</td>
-<td>31.5</td>
-<td>57.9</td>
-<td>10.6</td>
-<td>35.2</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>MI</td>
-<td>20.8</td>
-<td>68.3</td>
-<td>10.9</td>
-<td>23.3</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>MN</td>
-<td>32.2</td>
-<td>57.0</td>
-<td>10.8</td>
-<td>36.1</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>MS</td>
-<td>59.0</td>
-<td>30.4</td>
-<td>10.5</td>
-<td>66.0</td>
-<td>Democratic</td>
-</tr>
-<tr class="odd">
-<td>MT</td>
-<td>66.1</td>
-<td>22.9</td>
-<td>11.0</td>
-<td>74.2</td>
-<td>Democratic</td>
-</tr>
-<tr class="even">
-<td>NC</td>
-<td>35.2</td>
-<td>53.3</td>
-<td>11.5</td>
-<td>39.7</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>NE</td>
-<td>26.8</td>
-<td>62.3</td>
-<td>10.9</td>
-<td>30.1</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>NH</td>
-<td>19.8</td>
-<td>69.7</td>
-<td>10.5</td>
-<td>22.1</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>NJ</td>
-<td>43.3</td>
-<td>45.2</td>
-<td>11.5</td>
-<td>48.9</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>NM</td>
-<td>20.6</td>
-<td>68.8</td>
-<td>10.7</td>
-<td>23.0</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>OH</td>
-<td>24.7</td>
-<td>63.7</td>
-<td>11.7</td>
-<td>27.9</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>OK</td>
-<td>20.6</td>
-<td>68.6</td>
-<td>10.8</td>
-<td>23.1</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>OR</td>
-<td>28.9</td>
-<td>60.1</td>
-<td>11.0</td>
-<td>32.5</td>
-<td>Republican</td>
-</tr>
-<tr class="even">
-<td>RI</td>
-<td>19.6</td>
-<td>70.2</td>
-<td>10.2</td>
-<td>21.8</td>
-<td>Republican</td>
-</tr>
-<tr class="odd">
-<td>SC</td>
-<td>61.9</td>
-<td>26.8</td>
-<td>11.3</td>
-<td>69.8</td>
-<td>Democratic</td>
-</tr>
-<tr class="even">
-<td>SD</td>
-<td>50.5</td>
-<td>37.4</td>
-<td>12.0</td>
+<td>44.7</td>
+<td>33.1</td>
+<td>22.2</td>
 <td>57.4</td>
 <td>Democratic</td>
 </tr>
 <tr class="odd">
-<td>TN</td>
-<td>46.1</td>
-<td>41.4</td>
-<td>12.5</td>
-<td>52.7</td>
-<td>Democratic</td>
-</tr>
-<tr class="even">
-<td>TX</td>
-<td>62.5</td>
-<td>27.1</td>
-<td>10.4</td>
-<td>69.7</td>
-<td>Democratic</td>
-</tr>
-<tr class="odd">
-<td>VA</td>
-<td>34.7</td>
-<td>54.5</td>
-<td>10.7</td>
-<td>38.9</td>
+<td>GA</td>
+<td>29.3</td>
+<td>38.4</td>
+<td>32.4</td>
+<td>43.3</td>
 <td>Republican</td>
 </tr>
 <tr class="even">
+<td>IA</td>
+<td>28.0</td>
+<td>44.4</td>
+<td>27.5</td>
+<td>38.7</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>ID</td>
+<td>23.0</td>
+<td>50.5</td>
+<td>26.5</td>
+<td>31.3</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>IL</td>
+<td>42.8</td>
+<td>31.6</td>
+<td>25.6</td>
+<td>57.5</td>
+<td>Democratic</td>
+</tr>
+<tr class="odd">
+<td>KS</td>
+<td>29.4</td>
+<td>42.3</td>
+<td>28.3</td>
+<td>41.0</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>KY</td>
+<td>28.8</td>
+<td>42.8</td>
+<td>28.3</td>
+<td>40.2</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>LA</td>
+<td>28.6</td>
+<td>40.7</td>
+<td>30.7</td>
+<td>41.3</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>MA</td>
+<td>50.3</td>
+<td>24.9</td>
+<td>24.8</td>
+<td>66.9</td>
+<td>Democratic</td>
+</tr>
+<tr class="odd">
+<td>ME</td>
+<td>48.2</td>
+<td>34.0</td>
+<td>17.8</td>
+<td>58.7</td>
+<td>Democratic</td>
+</tr>
+<tr class="even">
+<td>MI</td>
+<td>36.5</td>
+<td>37.0</td>
+<td>26.5</td>
+<td>49.7</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>MN</td>
+<td>39.4</td>
+<td>36.6</td>
+<td>24.0</td>
+<td>51.9</td>
+<td>Democratic</td>
+</tr>
+<tr class="even">
+<td>MS</td>
+<td>26.8</td>
+<td>40.7</td>
+<td>32.5</td>
+<td>39.7</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>MT</td>
+<td>39.1</td>
+<td>40.8</td>
+<td>20.0</td>
+<td>48.9</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>NC</td>
+<td>31.1</td>
+<td>41.3</td>
+<td>27.6</td>
+<td>42.9</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>NE</td>
+<td>22.6</td>
+<td>45.5</td>
+<td>31.9</td>
+<td>33.2</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>NH</td>
+<td>53.5</td>
+<td>28.3</td>
+<td>18.2</td>
+<td>65.4</td>
+<td>Democratic</td>
+</tr>
+<tr class="odd">
+<td>NJ</td>
+<td>47.1</td>
+<td>29.5</td>
+<td>23.4</td>
+<td>61.5</td>
+<td>Democratic</td>
+</tr>
+<tr class="even">
+<td>NM</td>
+<td>42.9</td>
+<td>27.3</td>
+<td>29.9</td>
+<td>61.1</td>
+<td>Democratic</td>
+</tr>
+<tr class="odd">
+<td>OH</td>
+<td>29.5</td>
+<td>41.5</td>
+<td>29.0</td>
+<td>41.5</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>OK</td>
+<td>22.6</td>
+<td>43.4</td>
+<td>34.0</td>
+<td>34.3</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>OR</td>
+<td>42.6</td>
+<td>32.6</td>
+<td>24.8</td>
+<td>56.6</td>
+<td>Democratic</td>
+</tr>
+<tr class="even">
+<td>RI</td>
+<td>47.4</td>
+<td>25.3</td>
+<td>27.3</td>
+<td>65.2</td>
+<td>Democratic</td>
+</tr>
+<tr class="odd">
+<td>SC</td>
+<td>36.7</td>
+<td>38.8</td>
+<td>24.5</td>
+<td>48.6</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>SD</td>
+<td>20.8</td>
+<td>49.0</td>
+<td>30.1</td>
+<td>29.8</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>TN</td>
+<td>30.2</td>
+<td>43.2</td>
+<td>26.7</td>
+<td>41.1</td>
+<td>Republican</td>
+</tr>
+<tr class="even">
+<td>TX</td>
+<td>28.0</td>
+<td>35.9</td>
+<td>36.1</td>
+<td>43.8</td>
+<td>Republican</td>
+</tr>
+<tr class="odd">
+<td>VA</td>
+<td>42.3</td>
+<td>31.7</td>
+<td>26.0</td>
+<td>57.2</td>
+<td>Democratic</td>
+</tr>
+<tr class="even">
 <td>WV</td>
-<td>16.5</td>
-<td>73.5</td>
-<td>10.1</td>
-<td>18.3</td>
+<td>30.3</td>
+<td>45.7</td>
+<td>24.0</td>
+<td>39.9</td>
 <td>Republican</td>
 </tr>
 <tr class="odd">
 <td>WY</td>
-<td>30.6</td>
-<td>58.5</td>
-<td>10.9</td>
-<td>34.4</td>
+<td>21.8</td>
+<td>55.3</td>
+<td>22.9</td>
+<td>28.3</td>
 <td>Republican</td>
 </tr>
 </tbody>
@@ -534,7 +535,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="does-the-training-set-matter" class="level1">
 <h1>Does the training set matter?</h1>
 <p>The three requested training sets are 2022 only, 2024 only, and both cycles together.</p>
-<div id="506ff747" class="cell" data-execution_count="7">
+<div id="3afd5ef2" class="cell" data-execution_count="7">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -551,7 +552,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="e6b3fc46" class="cell" data-execution_count="8">
+<div id="de69ce9c" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -565,213 +566,213 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td>AK</td>
-<td>40.6</td>
-<td>41.0</td>
-<td>41.1</td>
+<td>18.8</td>
+<td>23.1</td>
+<td>35.7</td>
 </tr>
 <tr class="even">
 <td>AL</td>
-<td>73.8</td>
-<td>73.3</td>
-<td>70.8</td>
+<td>45.9</td>
+<td>41.8</td>
+<td>38.9</td>
 </tr>
 <tr class="odd">
 <td>AR</td>
-<td>56.5</td>
-<td>56.6</td>
-<td>55.9</td>
+<td>28.6</td>
+<td>30.9</td>
+<td>36.3</td>
 </tr>
 <tr class="even">
 <td>CO</td>
-<td>59.2</td>
-<td>58.7</td>
-<td>56.5</td>
+<td>49.2</td>
+<td>52.0</td>
+<td>55.2</td>
 </tr>
 <tr class="odd">
 <td>DE</td>
-<td>36.6</td>
-<td>38.5</td>
-<td>37.4</td>
+<td>69.4</td>
+<td>66.3</td>
+<td>58.1</td>
 </tr>
 <tr class="even">
 <td>FL</td>
-<td>58.3</td>
-<td>56.8</td>
-<td>53.6</td>
+<td>64.2</td>
+<td>57.4</td>
+<td>50.5</td>
 </tr>
 <tr class="odd">
 <td>GA</td>
-<td>54.2</td>
-<td>54.2</td>
-<td>52.6</td>
+<td>43.6</td>
+<td>43.3</td>
+<td>44.9</td>
 </tr>
 <tr class="even">
 <td>IA</td>
-<td>22.1</td>
-<td>22.1</td>
-<td>21.5</td>
+<td>38.6</td>
+<td>38.7</td>
+<td>39.6</td>
 </tr>
 <tr class="odd">
 <td>ID</td>
-<td>39.0</td>
-<td>39.7</td>
-<td>38.3</td>
+<td>30.4</td>
+<td>31.3</td>
+<td>36.4</td>
 </tr>
 <tr class="even">
 <td>IL</td>
-<td>35.0</td>
-<td>36.4</td>
-<td>33.4</td>
+<td>58.5</td>
+<td>57.5</td>
+<td>53.9</td>
 </tr>
 <tr class="odd">
 <td>KS</td>
-<td>35.1</td>
-<td>35.4</td>
-<td>34.0</td>
+<td>41.1</td>
+<td>41.0</td>
+<td>41.9</td>
 </tr>
 <tr class="even">
 <td>KY</td>
-<td>45.5</td>
-<td>45.7</td>
-<td>46.0</td>
+<td>43.1</td>
+<td>40.2</td>
+<td>37.7</td>
 </tr>
 <tr class="odd">
 <td>LA</td>
-<td>24.3</td>
-<td>25.1</td>
-<td>24.2</td>
+<td>45.6</td>
+<td>41.3</td>
+<td>37.9</td>
 </tr>
 <tr class="even">
 <td>MA</td>
-<td>30.9</td>
-<td>30.7</td>
-<td>30.4</td>
+<td>65.2</td>
+<td>66.9</td>
+<td>64.3</td>
 </tr>
 <tr class="odd">
 <td>ME</td>
-<td>35.2</td>
-<td>35.2</td>
-<td>35.8</td>
+<td>60.9</td>
+<td>58.7</td>
+<td>51.9</td>
 </tr>
 <tr class="even">
 <td>MI</td>
-<td>23.9</td>
-<td>23.3</td>
-<td>23.4</td>
+<td>51.7</td>
+<td>49.7</td>
+<td>46.0</td>
 </tr>
 <tr class="odd">
 <td>MN</td>
-<td>36.3</td>
-<td>36.1</td>
-<td>35.4</td>
+<td>50.1</td>
+<td>51.9</td>
+<td>51.4</td>
 </tr>
 <tr class="even">
 <td>MS</td>
-<td>65.9</td>
-<td>66.0</td>
-<td>65.8</td>
+<td>43.7</td>
+<td>39.7</td>
+<td>37.2</td>
 </tr>
 <tr class="odd">
 <td>MT</td>
-<td>76.0</td>
-<td>74.2</td>
-<td>71.6</td>
+<td>52.1</td>
+<td>48.9</td>
+<td>43.4</td>
 </tr>
 <tr class="even">
 <td>NC</td>
 <td>39.7</td>
-<td>39.7</td>
-<td>37.1</td>
+<td>42.9</td>
+<td>47.2</td>
 </tr>
 <tr class="odd">
 <td>NE</td>
-<td>29.8</td>
-<td>30.1</td>
-<td>27.7</td>
-</tr>
-<tr class="even">
-<td>NH</td>
-<td>21.8</td>
-<td>22.1</td>
-<td>20.8</td>
-</tr>
-<tr class="odd">
-<td>NJ</td>
-<td>50.4</td>
-<td>48.9</td>
-<td>46.4</td>
-</tr>
-<tr class="even">
-<td>NM</td>
-<td>22.4</td>
-<td>23.0</td>
-<td>23.0</td>
-</tr>
-<tr class="odd">
-<td>OH</td>
-<td>28.1</td>
-<td>27.9</td>
-<td>24.8</td>
-</tr>
-<tr class="even">
-<td>OK</td>
-<td>23.4</td>
-<td>23.1</td>
-<td>22.8</td>
-</tr>
-<tr class="odd">
-<td>OR</td>
-<td>33.0</td>
-<td>32.5</td>
-<td>31.8</td>
-</tr>
-<tr class="even">
-<td>RI</td>
-<td>22.1</td>
-<td>21.8</td>
-<td>20.6</td>
-</tr>
-<tr class="odd">
-<td>SC</td>
-<td>71.0</td>
-<td>69.8</td>
-<td>69.2</td>
-</tr>
-<tr class="even">
-<td>SD</td>
-<td>57.1</td>
-<td>57.4</td>
-<td>56.0</td>
-</tr>
-<tr class="odd">
-<td>TN</td>
-<td>55.1</td>
-<td>52.7</td>
-<td>50.9</td>
-</tr>
-<tr class="even">
-<td>TX</td>
-<td>70.3</td>
-<td>69.7</td>
-<td>66.5</td>
-</tr>
-<tr class="odd">
-<td>VA</td>
-<td>39.0</td>
-<td>38.9</td>
+<td>32.0</td>
+<td>33.2</td>
 <td>37.9</td>
 </tr>
 <tr class="even">
+<td>NH</td>
+<td>67.8</td>
+<td>65.4</td>
+<td>58.0</td>
+</tr>
+<tr class="odd">
+<td>NJ</td>
+<td>62.7</td>
+<td>61.5</td>
+<td>59.2</td>
+</tr>
+<tr class="even">
+<td>NM</td>
+<td>66.7</td>
+<td>61.1</td>
+<td>53.9</td>
+</tr>
+<tr class="odd">
+<td>OH</td>
+<td>41.3</td>
+<td>41.5</td>
+<td>42.6</td>
+</tr>
+<tr class="even">
+<td>OK</td>
+<td>34.5</td>
+<td>34.3</td>
+<td>36.3</td>
+</tr>
+<tr class="odd">
+<td>OR</td>
+<td>57.4</td>
+<td>56.6</td>
+<td>53.1</td>
+</tr>
+<tr class="even">
+<td>RI</td>
+<td>68.5</td>
+<td>65.2</td>
+<td>57.6</td>
+</tr>
+<tr class="odd">
+<td>SC</td>
+<td>52.6</td>
+<td>48.6</td>
+<td>44.4</td>
+</tr>
+<tr class="even">
+<td>SD</td>
+<td>28.8</td>
+<td>29.8</td>
+<td>34.6</td>
+</tr>
+<tr class="odd">
+<td>TN</td>
+<td>43.0</td>
+<td>41.1</td>
+<td>40.0</td>
+</tr>
+<tr class="even">
+<td>TX</td>
+<td>46.4</td>
+<td>43.8</td>
+<td>45.7</td>
+</tr>
+<tr class="odd">
+<td>VA</td>
+<td>58.4</td>
+<td>57.2</td>
+<td>54.5</td>
+</tr>
+<tr class="even">
 <td>WV</td>
-<td>18.6</td>
-<td>18.3</td>
-<td>17.8</td>
+<td>46.8</td>
+<td>39.9</td>
+<td>33.9</td>
 </tr>
 <tr class="odd">
 <td>WY</td>
-<td>34.3</td>
-<td>34.4</td>
-<td>33.0</td>
+<td>28.2</td>
+<td>28.3</td>
+<td>32.1</td>
 </tr>
 </tbody>
 </table>
@@ -781,7 +782,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="accuracy" class="level1">
 <h1>Accuracy</h1>
 <p>Each state-race is predicted by a model that never saw that state (leave-one-state-out). Single-year models are also asked to predict the other cycles, and multi-year models are tested by holding out each cycle in turn. The baseline predicts every state with the training-set average share.</p>
-<div id="a55a2732" class="cell" data-execution_count="9">
+<div id="022d0199" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -798,7 +799,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="be7c0ed4" class="cell" data-execution_count="10">
+<div id="d477cb6b" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -815,7 +816,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="6bde520e" class="cell" data-execution_count="11">
+<div id="2a07a1a5" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-display">
 <table class="dataframe table table-sm caption-top table-striped small">
 <thead>
@@ -838,245 +839,254 @@ ul.task-list li input[type="checkbox"] {
 <td>2022</td>
 <td>leave-one-state-out</td>
 <td>34</td>
-<td>2.4</td>
-<td>2.3</td>
-<td>2.0</td>
-<td>14.1</td>
-<td>94.1</td>
-<td>97.1</td>
+<td>5.7</td>
+<td>3.9</td>
+<td>5.5</td>
+<td>10.5</td>
+<td>82.4</td>
+<td>82.8</td>
 </tr>
 <tr class="even">
 <td>ces</td>
 <td>2022</td>
 <td>predict other years</td>
-<td>136</td>
-<td>2.4</td>
-<td>2.4</td>
-<td>2.0</td>
-<td>13.7</td>
-<td>94.9</td>
-<td>93.4</td>
+<td>134</td>
+<td>7.5</td>
+<td>5.6</td>
+<td>8.4</td>
+<td>9.3</td>
+<td>78.4</td>
+<td>78.1</td>
 </tr>
 <tr class="odd">
 <td>ces</td>
 <td>2024</td>
 <td>leave-one-state-out</td>
-<td>34</td>
-<td>2.3</td>
-<td>2.5</td>
-<td>1.9</td>
-<td>14.4</td>
-<td>97.1</td>
-<td>91.2</td>
+<td>33</td>
+<td>4.6</td>
+<td>4.4</td>
+<td>3.8</td>
+<td>7.3</td>
+<td>93.9</td>
+<td>87.5</td>
 </tr>
 <tr class="even">
 <td>ces</td>
 <td>2024</td>
 <td>predict other years</td>
-<td>136</td>
-<td>2.8</td>
-<td>2.8</td>
-<td>1.5</td>
-<td>13.8</td>
-<td>93.4</td>
-<td>94.1</td>
+<td>135</td>
+<td>6.1</td>
+<td>4.9</td>
+<td>5.9</td>
+<td>9.1</td>
+<td>81.5</td>
+<td>84.8</td>
 </tr>
 <tr class="odd">
 <td>ces</td>
 <td>2022+2024</td>
 <td>leave-one-state-out</td>
-<td>68</td>
-<td>2.3</td>
-<td>2.1</td>
-<td>2.0</td>
-<td>14.3</td>
-<td>95.6</td>
-<td>94.1</td>
+<td>67</td>
+<td>5.1</td>
+<td>4.2</td>
+<td>4.9</td>
+<td>9.1</td>
+<td>91.0</td>
+<td>85.2</td>
 </tr>
 <tr class="even">
 <td>ces</td>
 <td>2022+2024</td>
 <td>leave-one-cycle-out</td>
-<td>68</td>
-<td>2.3</td>
-<td>2.4</td>
-<td>2.3</td>
-<td>14.3</td>
-<td>94.1</td>
-<td>92.6</td>
+<td>67</td>
+<td>5.7</td>
+<td>5.1</td>
+<td>5.6</td>
+<td>9.1</td>
+<td>88.1</td>
+<td>85.2</td>
 </tr>
 <tr class="odd">
 <td>ces</td>
 <td>midterms</td>
 <td>leave-one-state-out</td>
-<td>68</td>
-<td>2.4</td>
-<td>2.3</td>
-<td>1.6</td>
-<td>14.0</td>
-<td>95.6</td>
-<td>100.0</td>
+<td>67</td>
+<td>6.7</td>
+<td>4.6</td>
+<td>7.0</td>
+<td>9.6</td>
+<td>79.1</td>
+<td>80.0</td>
 </tr>
 <tr class="even">
 <td>ces</td>
 <td>midterms</td>
 <td>leave-one-cycle-out</td>
-<td>68</td>
-<td>2.9</td>
-<td>3.0</td>
-<td>1.8</td>
-<td>14.0</td>
-<td>94.1</td>
-<td>98.5</td>
+<td>67</td>
+<td>10.2</td>
+<td>5.1</td>
+<td>10.8</td>
+<td>9.6</td>
+<td>74.6</td>
+<td>68.3</td>
 </tr>
 <tr class="odd">
 <td>ces</td>
 <td>all</td>
 <td>leave-one-state-out</td>
-<td>170</td>
-<td>2.2</td>
-<td>2.2</td>
-<td>1.5</td>
-<td>13.9</td>
-<td>95.9</td>
-<td>95.3</td>
+<td>168</td>
+<td>5.4</td>
+<td>4.3</td>
+<td>5.6</td>
+<td>8.8</td>
+<td>85.1</td>
+<td>86.6</td>
 </tr>
 <tr class="even">
 <td>ces</td>
 <td>all</td>
 <td>leave-one-cycle-out</td>
-<td>170</td>
-<td>2.5</td>
-<td>2.5</td>
-<td>1.5</td>
-<td>13.9</td>
-<td>95.3</td>
-<td>94.7</td>
+<td>168</td>
+<td>6.2</td>
+<td>4.5</td>
+<td>7.0</td>
+<td>8.8</td>
+<td>86.3</td>
+<td>85.4</td>
 </tr>
 <tr class="odd">
 <td>ces+acs</td>
 <td>2022</td>
 <td>leave-one-state-out</td>
 <td>34</td>
-<td>3.1</td>
-<td>3.0</td>
-<td>2.0</td>
-<td>14.1</td>
-<td>97.1</td>
-<td>100.0</td>
+<td>5.4</td>
+<td>3.7</td>
+<td>5.4</td>
+<td>10.5</td>
+<td>79.4</td>
+<td>79.3</td>
 </tr>
 <tr class="even">
 <td>ces+acs</td>
 <td>2022</td>
 <td>predict other years</td>
-<td>136</td>
-<td>2.7</td>
-<td>2.7</td>
-<td>2.0</td>
-<td>13.7</td>
-<td>95.6</td>
-<td>97.1</td>
+<td>134</td>
+<td>8.4</td>
+<td>5.4</td>
+<td>8.9</td>
+<td>9.3</td>
+<td>77.6</td>
+<td>75.8</td>
 </tr>
 <tr class="odd">
 <td>ces+acs</td>
 <td>2024</td>
 <td>leave-one-state-out</td>
-<td>34</td>
-<td>3.2</td>
-<td>3.2</td>
-<td>2.0</td>
-<td>14.4</td>
-<td>100.0</td>
-<td>94.1</td>
+<td>33</td>
+<td>4.9</td>
+<td>4.9</td>
+<td>4.0</td>
+<td>7.3</td>
+<td>90.9</td>
+<td>84.4</td>
 </tr>
 <tr class="even">
 <td>ces+acs</td>
 <td>2024</td>
 <td>predict other years</td>
-<td>136</td>
-<td>3.5</td>
-<td>3.2</td>
-<td>1.5</td>
-<td>13.8</td>
-<td>91.9</td>
-<td>95.6</td>
+<td>135</td>
+<td>6.6</td>
+<td>5.5</td>
+<td>5.7</td>
+<td>9.1</td>
+<td>77.0</td>
+<td>78.4</td>
 </tr>
 <tr class="odd">
 <td>ces+acs</td>
 <td>2022+2024</td>
 <td>leave-one-state-out</td>
-<td>68</td>
-<td>2.7</td>
-<td>2.5</td>
-<td>2.2</td>
-<td>14.3</td>
-<td>95.6</td>
-<td>94.1</td>
+<td>67</td>
+<td>5.2</td>
+<td>4.1</td>
+<td>4.7</td>
+<td>9.1</td>
+<td>86.6</td>
+<td>80.3</td>
 </tr>
 <tr class="even">
 <td>ces+acs</td>
 <td>2022+2024</td>
 <td>leave-one-cycle-out</td>
-<td>68</td>
-<td>2.8</td>
-<td>2.7</td>
-<td>2.3</td>
-<td>14.3</td>
-<td>92.6</td>
-<td>94.1</td>
+<td>67</td>
+<td>6.1</td>
+<td>5.4</td>
+<td>5.9</td>
+<td>9.1</td>
+<td>85.1</td>
+<td>85.2</td>
 </tr>
 <tr class="odd">
 <td>ces+acs</td>
 <td>midterms</td>
 <td>leave-one-state-out</td>
-<td>68</td>
-<td>2.6</td>
-<td>2.6</td>
-<td>1.7</td>
-<td>14.0</td>
-<td>95.6</td>
-<td>100.0</td>
+<td>67</td>
+<td>6.9</td>
+<td>4.2</td>
+<td>7.1</td>
+<td>9.6</td>
+<td>80.6</td>
+<td>81.7</td>
 </tr>
 <tr class="even">
 <td>ces+acs</td>
 <td>midterms</td>
 <td>leave-one-cycle-out</td>
-<td>68</td>
-<td>3.0</td>
-<td>3.1</td>
-<td>1.8</td>
-<td>14.0</td>
-<td>95.6</td>
-<td>100.0</td>
+<td>67</td>
+<td>11.2</td>
+<td>4.8</td>
+<td>11.2</td>
+<td>9.6</td>
+<td>67.2</td>
+<td>61.7</td>
 </tr>
 <tr class="odd">
 <td>ces+acs</td>
 <td>all</td>
 <td>leave-one-state-out</td>
-<td>170</td>
-<td>2.3</td>
-<td>2.2</td>
-<td>1.6</td>
-<td>13.9</td>
-<td>95.3</td>
-<td>94.7</td>
+<td>168</td>
+<td>5.5</td>
+<td>4.2</td>
+<td>5.6</td>
+<td>8.8</td>
+<td>85.1</td>
+<td>82.8</td>
 </tr>
 <tr class="even">
 <td>ces+acs</td>
 <td>all</td>
 <td>leave-one-cycle-out</td>
-<td>170</td>
-<td>2.5</td>
-<td>2.5</td>
-<td>1.6</td>
-<td>13.9</td>
-<td>95.9</td>
-<td>95.3</td>
+<td>168</td>
+<td>6.1</td>
+<td>4.4</td>
+<td>7.1</td>
+<td>8.8</td>
+<td>87.5</td>
+<td>82.8</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
+</section>
+<section id="data" class="level1">
+<h1>Data</h1>
+<ul>
+<li><code>data/01-raw_data/ces_2016_2020.parquet</code>, <code>ces_2022_2024.parquet</code>: CES respondents (Harvard Dataverse).</li>
+<li><code>data/01-raw_data/acs_state.parquet</code>: ACS 5-year state demographics (Census API).</li>
+<li><code>data/01-raw_data/senate_results.csv</code>: certified statewide Senate returns, 2016-2024 (MIT Election Lab).</li>
+<li><code>data/02-analysis_data/regression_*.parquet</code>: model metrics and the 2026 forecast.</li>
+</ul>
 </section>
 <section id="method" class="level1">
 <h1>Method</h1>

@@ -9,14 +9,16 @@ DATA
  3. "Undecided" = Not Sure + No One + third-party/other. It is not "will not vote";
     turnout is not modelled. Predicted shares are shares of survey respondents,
     not of ballots cast.
- 4. Certified results (when provided) only check the Dem share of the TWO-PARTY
+ 4. Certified results (MIT Election Lab, 2016-2024) only check the Dem share of the TWO-PARTY
     vote; they cannot validate the Undecided share.
  5. Small states have few respondents (WY ~95 in CES 2024), so their features and
     targets are noisy.
  6. "Republican %" / "Democrat %" features come from the same respondents as the
     targets: partly circular. ACS features (no party info) are the clean check.
- 7. 2016-2020 CES rows may lack some columns (e.g. intent_sen); cycles without
-    intent_sen are skipped automatically. Not yet checked on real data.
+ 7. 2016-2020 CES rows have intent_sen (checked on download). 2020 has fewer Senate
+    answers (26,000 vs 43,000-46,000 in other years), so 2020 states are noisier.
+ 7b. On real data, a model trained only on midterm cycles does worse than the
+    mean-share baseline when predicting a held-out cycle; cycle-to-cycle swings are large.
 
 MODEL
  8. Only ~34 state-races per cycle. Ridge regression with LOO-chosen penalty is used
@@ -27,7 +29,9 @@ MODEL
 10. No candidate-level information (incumbency, quality, spending, scandals, specials).
     Each state is treated as a generic Democrat-vs-Republican contest.
 11. Independents backed by a party (King, Sanders, Osborn) are coded by party label.
-12. Nebraska 2024 had two races; CES records one Senate vote.
+12. Two races in one state-year (GA 2020, NE 2024): the certified check uses the regular
+    race, except NE 2024 (special only has a Democrat). State-years with no Dem-v-Rep
+    contest (CA 2016/2018, ME 2018, VT 2018/2024, ...) are dropped from the check.
 13. Predictions are point estimates; no uncertainty intervals yet.
 
 SIMULATED DATA
@@ -36,11 +40,13 @@ SIMULATED DATA
     real 2026 accuracy. Do not quote simulated numbers as findings.
 
 SITE
-16. The Quarto page and figures currently show simulated results (banner on the page).
+16. The Quarto page and figures show REAL-data results (SOURCE = "real"); simulated PNGs
+    (paper/figures/simulated_*) are kept only to demonstrate the pipeline.
     The tile map saturates colours beyond 20%/80% Dem two-party share.
 
 ENVIRONMENT
-15. Claude's sandbox blocks api.census.gov and dataverse.harvard.edu, so ACS and
-    extra CES years are untested against the live sources. The ACS variable codes
+15. ACS was downloaded successfully (variable codes confirmed). Only 12 variables are
+    used; ACS adds no accuracy on real data, likely because CES already captures
+    demographics and party ID, and there are only ~34 races per cycle. The ACS variable codes
     (B01001, B01002, B02001, B03003, B15003, B19013) were written from knowledge of
     the Census API and need a first real run to confirm.

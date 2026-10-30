@@ -22,6 +22,7 @@ Method (scripts/05-regression.py)
 Files
  scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
  scripts/01-download_data.py                CES 2016-2024 (2016-2020 -> ces_2016_2020.parquet)
+  scripts/01c-download_results.py            certified Senate results 2016-2024 (MIT Election Lab)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
  scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
@@ -35,15 +36,21 @@ Files
 Status
  - Every one of the 35 2026 races has D/R/Undecided percentages (sum to 100%) under every
    training set, on simulated and on real 2022/2024 CES data.
- - Figures and the Quarto page are built from SIMULATED data; flip SOURCE to "real" in
-   paper/regression.qmd (and run 06-make_figures.py --source real) when real inputs exist.
+
  - Pipeline runs end to end on simulated data (--source simulated) and on the real
    2022/2024 CES.
  - Real-data results so far (CES features only; targets are CES intent): Dem-share
    MAE about 4.6-5.7 pp vs 7-10 pp for a mean baseline; winner accuracy 82-94%.
-   Not yet validated against certified results.
- - Waiting on: Census API key + ACS download, CES 2016-2020 download, certified
-   results file (see user_todo.txt).
+   
+ - CES 2016-2024 now downloaded; the real regression runs on all five cycles (CES
+   features only). Real-data leave-one-cycle-out error for the 'midterms' set is
+   WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
+ - Real validation vs certified results (CES features only, Dem two-party share):
+   MAE 4.7-5.9 pp, winner correct 83-88% for 2022, 2024, 2022+2024 and 'all' models
+   (leave-one-state-out); out-of-cycle error is larger (5.4-8.2 pp).
+ - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
+   equal or slightly worse than CES-only); CES-only is the recommended primary set.
+ - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)

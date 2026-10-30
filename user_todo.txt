@@ -2,38 +2,32 @@ USER TODO  (kept up to date by Claude; last updated 2026-10-30)
 =====================================================================
 Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your action.
 
-[DO]  Get a free Census API key: https://api.census.gov/data/key_signup.html
-      Put it in .env as CENSUS_API_KEY=... (copy .env.example to .env first).
-      Then run: uv run scripts/01b-download_acs.py
-      (Claude's sandbox blocks api.census.gov, so this has to run on your side
-      or after the environment's Network access allows that host.)
+[DONE] ACS downloaded (255 state-years, 2016-2024) with the activated Census key
+      (passed inline, never stored). data/01-raw_data/acs_state.parquet.
 
-[DO]  Re-run the CES download to add 2016/2018/2020:
-      uv run scripts/01-download_data.py   -> creates data/01-raw_data/ces_2016_2020.parquet
-      (Claude's sandbox blocks dataverse.harvard.edu.)
-      Commit the new parquet files afterwards.
+[DONE] CES 2016-2020 downloaded from Dataverse (data/01-raw_data/ces_2016_2020.parquet);
+      the real regression now runs on 2016-2024 (CES features only, no ACS yet).
 
-[DO]  Provide certified Senate results as data/01-raw_data/senate_results.csv
-      Columns: year, st, dem_votes, rep_votes, other_votes   (2016-2024 cycles)
-      Source suggestion: MIT Election Lab / state certified results.
-      Claude does not type results from memory.
-      Without this file, accuracy is measured only against CES respondents.
+[DONE] Certified Senate results downloaded from MIT Election Lab via Dataverse
+      (scripts/01c-download_results.py -> data/01-raw_data/senate_results.csv, 157
+      state-races, 2016-2024). Review the selection rules at the top of that script.
 
-[DO]  Run the real regression once the three inputs above exist:
-      uv run scripts/05-regression.py --source real
-      and tell Claude to review the metrics (data/02-analysis_data/regression_metrics.parquet).
-      Then in paper/regression.qmd change SOURCE = "simulated" to "real", run
-      uv run scripts/06-make_figures.py --source real and uv run quarto render paper.
+[DONE] The Quarto page (paper/regression.qmd) now runs on REAL data (SOURCE = "real") and
+      is rendered to docs/. Real figures: paper/figures/real_*.png.
 
 [DECIDE] Which 2026 feature source is primary: CES-only, or CES+ACS?
-      (Both are computed. Pick after seeing real-data accuracy.)
+      Real data: ACS does NOT improve accuracy (e.g. 2022+2024, leave-one-state-out Dem
+      two-party MAE 5.13 pp CES-only vs 5.23 pp CES+ACS). Recommendation: CES-only as
+      primary, CES+ACS as a robustness check. The site's headline model uses ces+acs
+      whenever ACS exists; tell Claude if you want it switched to CES-only.
 
 [DECIDE] Independents who caucus with a party (King ME, Sanders VT, Osborn NE):
       code them by candidate ("Democratic-aligned") or by party label?
       Currently by label, which mis-codes them. Affects the official-results check only.
 
-[DECIDE] Nebraska 2024 had two Senate races; CES has one vote per respondent.
-      Treat as one race (current) or drop NE 2024 from training?
+[DECIDE] Nebraska 2024 (and GA 2020): the official-results check uses the regular race,
+      except NE 2024 where only the special (Ricketts v. Love) has a Democrat. Does CES
+      NE intent refer to that race? Keep, or drop NE 2024 from the check?
 
 [DECIDE] Midterm swing for 2026: the model learns a midterm effect only from
       midterm cycles (2018, 2022, ...). Do you want a manual adjustment

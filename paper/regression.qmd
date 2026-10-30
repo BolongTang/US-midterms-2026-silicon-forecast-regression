@@ -17,9 +17,9 @@ import pandas as pd
 import polars as pl
 from IPython.display import HTML, Markdown, display
 
-# "simulated" runs on synthetic inputs (data/00-simulated_data). Switch to "real"
-# once the CES (2016-2024), ACS and certified-results files are downloaded.
-SOURCE = "simulated"
+# "real" uses CES 2016-2024, ACS 2016-2024 and certified Senate results
+# (data/01-raw_data). "simulated" uses synthetic inputs in data/00-simulated_data.
+SOURCE = "real"
 
 spec = importlib.util.spec_from_file_location("figs", Path("..") / "scripts" / "06-make_figures.py")
 figs = importlib.util.module_from_spec(spec)
@@ -42,7 +42,14 @@ def pct(s):
 
 ```{python}
 #| output: asis
-if SOURCE == "simulated":
+if SOURCE == "real":
+    print("""::: {.callout-note}
+## Real data
+Features come from the Cooperative Election Study (CES, 2016-2024) and the Census ACS 5-year
+estimates. Targets are CES pre-election Senate intent; accuracy is also checked against certified
+results from the MIT Election Lab. No 2026 survey exists, so 2026 features carry the 2024 profiles forward.
+:::""")
+else:
     print("""::: {.callout-warning}
 ## Synthetic data
 Every number and figure on this page comes from **simulated** survey, census and
@@ -142,6 +149,13 @@ m = metrics.select(
 ).to_pandas()
 table(m)
 ```
+
+# Data
+
+- `data/01-raw_data/ces_2016_2020.parquet`, `ces_2022_2024.parquet`: CES respondents (Harvard Dataverse).
+- `data/01-raw_data/acs_state.parquet`: ACS 5-year state demographics (Census API).
+- `data/01-raw_data/senate_results.csv`: certified statewide Senate returns, 2016-2024 (MIT Election Lab).
+- `data/02-analysis_data/regression_*.parquet`: model metrics and the 2026 forecast.
 
 # Method
 

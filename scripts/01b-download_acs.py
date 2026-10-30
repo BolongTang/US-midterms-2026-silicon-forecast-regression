@@ -6,8 +6,8 @@
 # Contact: yizhiharry.zhang@mail.utoronto.ca
 # License: MIT
 # Pre-requisites: Internet access (api.census.gov) and a free Census API key
-#   (https://api.census.gov/data/key_signup.html). Put it in .env as
-#   CENSUS_API_KEY=... (see .env.example).
+#   (https://api.census.gov/data/key_signup.html), supplied as the environment
+#   variable CENSUS_API_KEY (or in .env; see .env.example).
 #
 # Outputs (in data/01-raw_data/):
 #   - acs_state.parquet: one row per state and ACS year, with shares in [0, 1]
@@ -63,16 +63,31 @@ STATES = {
 
 
 #### Download ####
+MAX_VARIABLES = 50  # the Census API returns at most 50 variables per request
+
+
+def chunks(codes: list[str], size: int = MAX_VARIABLES - 1) -> list[list[str]]:
+    """Split variable codes into request-sized groups (NAME takes one slot)."""
+    return [codes[i : i + size] for i in range(0, len(codes), size)]
+
+
 def fetch_year(year: int) -> pl.DataFrame:
-    url = f"https://api.census.gov/data/{year}/acs/acs5"
     key = os.environ.get("CENSUS_API_KEY")
     if not key:
-        raise SystemExit("Set CENSUS_API_KEY in .env (see .env.example).")
-    params = {"get": "NAME," + ",".join(VARIABLES), "for": "state:*", "key": key}
-    r = httpx.get(url, params=params, timeout=60)
-    r.raise_for_status()
-    header, *rows = r.json()
-    df = pl.DataFrame(rows, schema=header, orient="row")
+        raise SystemExit("CENSUS_API_KEY is not set (environment variable or .env).")
+    url = f"https://api.census.gov/data/{year}/acs/acs5"
+    frames = []
+    for group in chunks(list(VARIABLES)):
+        params = {"get": "NAME," + ",".join(group), "for": "state:*", "key": key}
+        r = httpx.get(url, params=params, timeout=60)
+        if r.status_code != 200:  # never print the URL: it contains the key
+            hint = " (Census rejected the key: check it and activate it via the email link)" if "invalid_key" in r.headers.get("location", "") else ""
+            raise SystemExit(f"ACS {year}: HTTP {r.status_code}{hint}")
+        header, *rows = r.json()
+        frames.append(pl.DataFrame(rows, schema=header, orient="row").drop("state"))
+    df = frames[0]
+    for f in frames[1:]:
+        df = df.join(f, on="NAME")
     df = df.filter(pl.col("NAME").is_in(list(STATES)))  # drops Puerto Rico
     return df.select(
         acs_year=pl.lit(year),
