@@ -44,7 +44,8 @@ SITE
     The tile map saturates colours beyond 20%/80% Dem two-party share.
 
 ENVIRONMENT
-15. Network access is open, but the Census key provided was rejected as invalid, so the
-    ACS download is still untested against the live API. The ACS variable codes
+15. ACS was downloaded successfully (variable codes confirmed). Only 12 variables are
+    used; ACS adds no accuracy on real data, likely because CES already captures
+    demographics and party ID, and there are only ~34 races per cycle. The ACS variable codes
     (B01001, B01002, B02001, B03003, B15003, B19013) were written from knowledge of
     the Census API and need a first real run to confirm.

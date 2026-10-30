@@ -49,7 +49,10 @@ Status
  - Real validation vs certified results (CES features only, Dem two-party share):
    MAE 4.7-5.9 pp, winner correct 83-88% for 2022, 2024, 2022+2024 and 'all' models
    (leave-one-state-out); out-of-cycle error is larger (5.4-8.2 pp).
- - Waiting on: ACS download (CENSUS_API_KEY not visible in the current session).
+ - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
+   equal or slightly worse than CES-only); CES-only is the recommended primary set.
+ - Real-data figures: paper/figures/real_*.png. The Quarto page still shows simulated
+   data until SOURCE is switched to "real" (see user_todo.txt).
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)

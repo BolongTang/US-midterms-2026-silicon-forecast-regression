@@ -2,12 +2,8 @@ USER TODO  (kept up to date by Claude; last updated 2026-10-30)
 =====================================================================
 Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your action.
 
-[DO]  ACS download is blocked: api.census.gov rejected the Census key you gave Claude
-      (redirect to invalid_key.html). Most likely the key is not activated yet:
-      open the activation link in the email from Census, or request a new key at
-      https://api.census.gov/data/key_signup.html. Then give Claude the new key (it is
-      used inline and never written to a file) or set CENSUS_API_KEY in a new session.
-      Note: ACS is not on Harvard Dataverse; it comes only from api.census.gov.
+[DONE] ACS downloaded (255 state-years, 2016-2024) with the activated Census key
+      (passed inline, never stored). data/01-raw_data/acs_state.parquet.
 
 [DONE] CES 2016-2020 downloaded from Dataverse (data/01-raw_data/ces_2016_2020.parquet);
       the real regression now runs on 2016-2024 (CES features only, no ACS yet).
@@ -16,14 +12,15 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
       (scripts/01c-download_results.py -> data/01-raw_data/senate_results.csv, 157
       state-races, 2016-2024). Review the selection rules at the top of that script.
 
-[DO]  Run the real regression once the ACS file exists:
-      uv run scripts/05-regression.py --source real
-      and tell Claude to review the metrics (data/02-analysis_data/regression_metrics.parquet).
-      Then in paper/regression.qmd change SOURCE = "simulated" to "real", run
+[DO]  Real regression + real figures are built (paper/figures/real_*.png). To put real
+      results on the website: in paper/regression.qmd change SOURCE = "simulated" to "real", run
       uv run scripts/06-make_figures.py --source real and uv run quarto render paper.
 
 [DECIDE] Which 2026 feature source is primary: CES-only, or CES+ACS?
-      (Both are computed. Pick after seeing real-data accuracy.)
+      Real data: ACS does NOT improve accuracy (e.g. 2022+2024, leave-one-state-out Dem
+      two-party MAE 5.13 pp CES-only vs 5.23 pp CES+ACS). Recommendation: CES-only as
+      primary, CES+ACS as a robustness check. The site's headline model uses ces+acs
+      whenever ACS exists; tell Claude if you want it switched to CES-only.
 
 [DECIDE] Independents who caucus with a party (King ME, Sanders VT, Osborn NE):
       code them by candidate ("Democratic-aligned") or by party label?
