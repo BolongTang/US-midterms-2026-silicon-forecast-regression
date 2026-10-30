@@ -15,10 +15,10 @@ DATA
     targets are noisy.
  6. "Republican %" / "Democrat %" features come from the same respondents as the
     targets: partly circular. ACS features (no party info) are the clean check.
- 7. 2016-2020 CES rows have intent_sen (checked on download). 2020 has fewer Senate
-    answers (26,000 vs 43,000-46,000 in other years), so 2020 states are noisier.
- 7b. On real data, a model trained only on midterm cycles does worse than the
-    mean-share baseline when predicting a held-out cycle; cycle-to-cycle swings are large.
+ 7. 2014-2020 CES rows have intent_sen (checked on download). Senate answers per year:
+    2014 27,313; 2016 46,459; 2018 42,848; 2020 26,000; so 2014 and 2020 states are noisier.
+ 7b. Cycle-to-cycle swings are large: predicting 2018 from the other cycles has 8.1 pp
+    error (vs 5-6 pp for other cycles), so a single-cycle model is a poor guide to a new year.
 
 MODEL
  8. Only ~34 state-races per cycle. Ridge regression with LOO-chosen penalty is used
@@ -28,11 +28,62 @@ MODEL
     training set. The 2024-only model cannot learn it (flag is constant).
 10. No candidate-level information (incumbency, quality, spending, scandals, specials).
     Each state is treated as a generic Democrat-vs-Republican contest.
-11. Independents backed by a party (King, Sanders, Osborn) are coded by party label.
-12. Two races in one state-year (GA 2020, NE 2024): the certified check uses the regular
-    race, except NE 2024 (special only has a Democrat). State-years with no Dem-v-Rep
-    contest (CA 2016/2018, ME 2018, VT 2018/2024, ...) are dropped from the check.
+11. Independents who caucus with a party are coded by it (King, Sanders -> Democrat). Osborn
+    (NE 2024) does not caucus, so stays 'other'; other independents/third parties (Orman KS 2014,
+    Pressler SD 2014, Stock AK 2016, McMullin UT 2022) also stay 'other'. 'Caucuses with' is a
+    judgement about future affiliation, not a ballot label.
+12. Special and regular races are treated alike: a race counts if it has both a Democrat
+    (after coding) and a Republican, and a state with two such races in one year pools them
+    (GA 2020, OK, SC, MN, MS, CA 2022). CES records one Senate answer per respondent, so a
+    pooled state-year can differ slightly from what a respondent had in mind. State-years with
+    no Dem-v-Rep contest (CA 2016/2018, NE 2024 regular) are dropped.
 13. Predictions are point estimates; no uncertainty intervals yet.
+
+LEAKAGE AND BASELINES
+17. Residual: CES case_ids do not repeat across cycles in the cumulative file, so panel
+    overlap between survey waves cannot be checked. Panel respondents would make lagged
+    features correlated with later targets (not future information, but dependence).
+18. Forward-chaining test sets are small (about 30 races per cycle); winner accuracy
+    differences of 1-3 points (a few races) are within noise.
+19. 'last Senate result' is undefined for states with no earlier Senate race in the
+    data; baselines are compared only on rows where every method has a prediction.
+20. Leakage from same-year features was modest and noisy (about 0.5 pp for the survey-only
+    'all' set; the opposite sign in some sets), so it is a risk control, not the main driver.
+
+PREVIOUS-RESULT FEATURES
+21. The headline model is chosen on 3 validation cycles (about 100 races, strongly correlated
+    within a cycle) and scored on one holdout cycle (33 races); differences of about a point
+    between candidates are within noise. On the 2024 holdout, 'prior' alone happened to beat
+    the chosen model (2.8 vs 5.6 pp); that is the expected cost of selecting on validation.
+22. Where a state had no earlier Senate race the Senate feature falls back to the
+    presidential share (flagged). Previous presidential results are 2-4 years old,
+    depending on whether the target is a midterm or presidential year.
+23. A linear ridge on the three-way log-ratio is not guaranteed to match a raw baseline
+    with the same information: the 'last presidential result' baseline has lower error
+    (4.0 pp) than ridge on previous results (5.0 pp).
+
+MIDTERM-ONLY MODELS AND HEADLINE
+24. Midterm-only models train on 1 cycle (to predict 2018) or 2 cycles (to predict 2022) and 3
+    cycles for 2026, so they have far less data than all-cycle models; the midterm flag is
+    constant in them. Their worse accuracy partly reflects sample size, not just midterm-vs-
+    presidential differences.
+25. The headline feature set (ces+acs) beat ces+prior on validation by 0.05 pp: a tie. The
+    choice among feature sets is not statistically meaningful; averaging models would be safer.
+
+WEBSITE / CANDIDATES
+26. Nominee names, incumbency and party come from Wikipedia race infoboxes at download time (CC BY-SA),
+    citing state election offices; they can change before election day. A few replacements are
+    already visible (Maine, South Carolina).
+27. Official portraits exist only for current or former members of Congress (33 of 75 candidates,
+    matched by name within the state). Challengers without congressional service show initials.
+    A name match could in principle pick the wrong person; same-state last-name and first-name
+    checks make that unlikely but it is not verified by hand.
+28. The winner shown in each race is the nominee of the predicted-winning PARTY. The model predicts
+    party vote shares, not candidates; it knows nothing about who the nominees are.
+29. Idaho, Nebraska and South Dakota have no Democratic nominee; a predicted Democratic share there is
+    the generic Democratic vote. A predicted 'Democratic win' in such a state would have no named winner.
+30. The winner map uses an Albers projection with Alaska and Hawaii as insets drawn from a public-domain
+    state outline file; small states are labelled beside the map with leader lines.
 
 SIMULATED DATA
 14. Simulated results (data/00-simulated_data/) come from a known generating

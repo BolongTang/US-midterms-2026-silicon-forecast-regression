@@ -20,9 +20,9 @@ res = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(res)
 
 
-def row(year, st, party, votes, special=False, stage="gen"):
-    return {"year": year, "state_po": st, "party_simplified": party, "candidatevotes": votes,
-            "special": special, "stage": stage}  # fmt: skip
+def row(year, st, party, votes, special=False, stage="gen", candidate="X", detailed=None):
+    return {"year": year, "state_po": st, "party_simplified": party, "party_detailed": detailed or party,
+            "candidate": candidate, "candidatevotes": votes, "special": special, "stage": stage}  # fmt: skip
 
 
 def test_builds_one_two_party_race_per_state_year():
@@ -38,17 +38,34 @@ def test_builds_one_two_party_race_per_state_year():
     assert out.row(0, named=True)["other_votes"] == 5
 
 
-def test_prefers_regular_race_but_falls_back_to_special():
+def test_caucusing_independents_are_coded_by_party_but_others_are_not():
+    raw = pl.DataFrame([
+        # Maine: King (independent, caucuses with Democrats) v. a Republican
+        row(2018, "ME", "OTHER", 60, candidate="ANGUS S. KING, JR.", detailed="INDEPENDENT"),
+        row(2018, "ME", "REPUBLICAN", 40),
+        # Nebraska: Osborn does not caucus with a party; no Democrat in this race
+        row(2024, "NE", "OTHER", 46, candidate="DAN OSBORN", detailed="BY PETITION"),
+        row(2024, "NE", "REPUBLICAN", 54),
+        # an independent named King in another state is not recoded
+        row(2018, "ZZ", "OTHER", 30, candidate="JOHN KING", detailed="INDEPENDENT"), row(2018, "ZZ", "REPUBLICAN", 70),
+    ])  # fmt: skip
+    out = res.build_results(raw, [2018, 2024]).sort("st")
+    assert out["st"].to_list() == ["ME"]  # NE and ZZ have no Democrat, so no race
+    assert out["dem_votes"].to_list() == [60]  # King counted as a Democrat
+
+
+def test_special_and_regular_races_are_pooled_alike():
     raw = pl.DataFrame([
         row(2020, "GA", "DEMOCRAT", 10), row(2020, "GA", "REPUBLICAN", 12),
         row(2020, "GA", "DEMOCRAT", 7, special=True), row(2020, "GA", "REPUBLICAN", 9, special=True),
-        # regular race has no Democrat (Nebraska 2024 pattern); special does
-        row(2024, "NE", "REPUBLICAN", 50), row(2024, "NE", "OTHER", 40),
+        # regular race has no Democrat (Nebraska 2024 pattern); the special race does
+        row(2024, "NE", "REPUBLICAN", 50), row(2024, "NE", "OTHER", 40, detailed="BY PETITION"),
         row(2024, "NE", "REPUBLICAN", 58, special=True), row(2024, "NE", "DEMOCRAT", 35, special=True),
     ])  # fmt: skip
     out = res.build_results(raw, [2020, 2024]).sort("year")
-    assert out["dem_votes"].to_list() == [10, 35]
-    assert out["special"].to_list() == [False, True]
+    assert out["dem_votes"].to_list() == [17, 35]  # Georgia pools both races; Nebraska keeps the one with a Democrat
+    assert out["rep_votes"].to_list() == [21, 58]
+    assert out["n_races"].to_list() == [2, 1]
 
 
 def test_real_results_file_is_usable():

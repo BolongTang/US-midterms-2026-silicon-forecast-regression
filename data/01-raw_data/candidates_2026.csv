@@ -1,0 +1,76 @@
+st,state,race,party,name,is_incumbent,bioguide_id,gender,photo_file
+AK,Alaska,regular,Democratic,Mary Peltola,false,P000619,F,P000619.jpg
+AK,Alaska,regular,Republican,Dan S. Sullivan,true,S001198,M,S001198.jpg
+AL,Alabama,regular,Democratic,Everett Wess,false,,,
+AL,Alabama,regular,Republican,Barry Moore,false,M001212,M,M001212.jpg
+AR,Arkansas,regular,Democratic,Hallie Shoffner,false,,,
+AR,Arkansas,regular,Republican,Tom Cotton,true,C001095,M,C001095.jpg
+CO,Colorado,regular,Democratic,John Hickenlooper,true,H000273,M,H000273.jpg
+CO,Colorado,regular,Republican,Mark Baisley,false,,,
+DE,Delaware,regular,Democratic,Chris Coons,true,C001088,M,C001088.jpg
+DE,Delaware,regular,Republican,Michael Katz,false,,,
+FL,Florida,special,Democratic,Angie Nixon,false,,,
+FL,Florida,special,Republican,Ashley Moody,true,M001244,F,M001244.jpg
+GA,Georgia,regular,Democratic,Jon Ossoff,true,O000174,M,O000174.jpg
+GA,Georgia,regular,Republican,Mike Collins,false,C001129,M,C001129.jpg
+IA,Iowa,regular,Democratic,Josh Turek,false,,,
+IA,Iowa,regular,Other,Thomas Laehn,false,,,
+IA,Iowa,regular,Republican,Ashley Hinson,false,H001091,F,H001091.jpg
+ID,Idaho,regular,Other,Todd Achilles,false,,,
+ID,Idaho,regular,Republican,Jim Risch,true,R000584,M,R000584.jpg
+IL,Illinois,regular,Democratic,Juliana Stratton,false,,,
+IL,Illinois,regular,Republican,Don Tracy,false,,,
+KS,Kansas,regular,Democratic,Adam Hamilton,false,,,
+KS,Kansas,regular,Republican,Roger Marshall,true,M001198,M,M001198.jpg
+KY,Kentucky,regular,Democratic,Charles Booker,false,,,
+KY,Kentucky,regular,Republican,Andy Barr,false,B001282,M,B001282.jpg
+LA,Louisiana,regular,Democratic,Jamie Davis,false,,,
+LA,Louisiana,regular,Republican,Julia Letlow,false,L000595,F,L000595.jpg
+MA,Massachusetts,regular,Democratic,Ed Markey,true,M000133,M,M000133.jpg
+MA,Massachusetts,regular,Other,Joe Tache,false,,,
+MA,Massachusetts,regular,Republican,John Deaton,false,,,
+ME,Maine,regular,Democratic,Troy Jackson,false,,,
+ME,Maine,regular,Republican,Susan Collins,true,C001035,F,C001035.jpg
+MI,Michigan,regular,Democratic,Abdul El-Sayed,false,,,
+MI,Michigan,regular,Republican,Mike Rogers,false,R000572,M,R000572.jpg
+MN,Minnesota,regular,Democratic,Peggy Flanagan,false,,,
+MN,Minnesota,regular,Republican,Michele Tafoya,false,,,
+MS,Mississippi,regular,Democratic,Scott Colom,false,,,
+MS,Mississippi,regular,Other,Ty Pinkins,false,,,
+MS,Mississippi,regular,Republican,Cindy Hyde-Smith,true,H001079,F,H001079.jpg
+MT,Montana,regular,Democratic,Alani Bankhead,false,,,
+MT,Montana,regular,Other,Kyle Austin,false,,,
+MT,Montana,regular,Other,Seth Bodnar,false,,,
+MT,Montana,regular,Republican,Kurt Alme,false,,,
+NC,North Carolina,regular,Democratic,Roy Cooper,false,,,
+NC,North Carolina,regular,Republican,Michael Whatley,false,,,
+NE,Nebraska,regular,Other,Dan Osborn,false,,,
+NE,Nebraska,regular,Republican,Pete Ricketts,true,R000618,M,R000618.jpg
+NH,New Hampshire,regular,Democratic,Chris Pappas,false,P000614,M,P000614.jpg
+NH,New Hampshire,regular,Republican,John E. Sununu,false,S001078,M,S001078.jpg
+NJ,New Jersey,regular,Democratic,Cory Booker,true,B001288,M,B001288.jpg
+NJ,New Jersey,regular,Republican,Justin Murphy,false,,,
+NM,New Mexico,regular,Democratic,Ben Ray Luján,true,L000570,M,L000570.jpg
+NM,New Mexico,regular,Republican,Larry Marker,false,,,
+OH,Ohio,special,Democratic,Sherrod Brown,false,B000944,M,B000944.jpg
+OH,Ohio,special,Republican,Jon Husted,true,H001104,M,H001104.jpg
+OK,Oklahoma,regular,Democratic,"N'Kiyla ""Jasmine"" Thomas",false,,,
+OK,Oklahoma,regular,Republican,Kevin Hern,false,H001082,M,H001082.jpg
+OR,Oregon,regular,Democratic,Jeff Merkley,true,M001176,M,M001176.jpg
+OR,Oregon,regular,Republican,David Brock Smith,false,,,
+RI,Rhode Island,regular,Democratic,Jack Reed,true,R000122,M,R000122.jpg
+RI,Rhode Island,regular,Republican,Raymond McKay,false,,,
+SC,South Carolina,regular,Democratic,Annie Andrews,false,,,
+SC,South Carolina,regular,Republican,Darline Graham,true,,,
+SD,South Dakota,regular,Other,Brian Bengs,false,,,
+SD,South Dakota,regular,Republican,Mike Rounds,true,R000605,M,R000605.jpg
+TN,Tennessee,regular,Democratic,Marquita Bradshaw,false,,,
+TN,Tennessee,regular,Republican,Bill Hagerty,true,H000601,M,H000601.jpg
+TX,Texas,regular,Democratic,James Talarico,false,,,
+TX,Texas,regular,Republican,Ken Paxton,false,,,
+VA,Virginia,regular,Democratic,Mark Warner,true,W000805,M,W000805.jpg
+VA,Virginia,regular,Republican,Bert Mizusawa,false,,,
+WV,West Virginia,regular,Democratic,Rachel Fetty Anderson,false,,,
+WV,West Virginia,regular,Republican,Shelley Moore Capito,true,C001047,F,C001047.jpg
+WY,Wyoming,regular,Democratic,James W. Byrd,false,,,
+WY,Wyoming,regular,Republican,Harriet Hageman,false,H001096,F,H001096.jpg
