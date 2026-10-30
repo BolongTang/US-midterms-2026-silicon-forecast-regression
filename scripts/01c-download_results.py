@@ -33,7 +33,7 @@ import polars as pl
 
 RAW_DIR = Path("data/01-raw_data")
 FILE_ID = 13887039  # 1976-2024-senate-state.csv
-YEARS = [2016, 2018, 2020, 2022, 2024]
+YEARS = [2014, 2016, 2018, 2020, 2022, 2024]
 
 
 #### Build results ####

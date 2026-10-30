@@ -13,7 +13,8 @@ Method (scripts/05-regression.py)
  - Model: ridge regression on additive log-ratios (multi-class, stays on the
    simplex), penalty by leave-one-out CV.
  - Three training sets for the 2026 forecast: 2022 only, 2024 only, 2022+2024.
-   Extra sets "midterms" and "all" appear when 2016-2020 data are present.
+   Every single cycle (2014 ... 2024) is also a training set, plus 2014+2016+2018,
+   "midterms" (2014, 2018, 2022) and "all" (six cycles) when the data are present.
  - Tests: leave-one-state-out, predict other cycles, leave-one-cycle-out; MAE of
    each share vs. a mean-share baseline; winner accuracy; and, when
    data/01-raw_data/senate_results.csv exists, error vs. certified two-party share.
@@ -21,8 +22,8 @@ Method (scripts/05-regression.py)
 
 Files
  scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
- scripts/01-download_data.py                CES 2016-2024 (2016-2020 -> ces_2016_2020.parquet)
-  scripts/01c-download_results.py            certified Senate results 2016-2024 (MIT Election Lab)
+ scripts/01-download_data.py                CES 2014-2024 (2014-2020 -> ces_2014_2020.parquet)
+  scripts/01c-download_results.py            certified Senate results 2014-2024 (MIT Election Lab)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
  scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
@@ -42,12 +43,15 @@ Status
  - Real-data results so far (CES features only; targets are CES intent): Dem-share
    MAE about 4.6-5.7 pp vs 7-10 pp for a mean baseline; winner accuracy 82-94%.
    
- - CES 2016-2024 now downloaded; the real regression runs on all five cycles (CES
+ - CES 2014-2024 now downloaded; the real regression runs on all five cycles (CES
    features only). Real-data leave-one-cycle-out error for the 'midterms' set is
    WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
- - Real validation vs certified results (CES features only, Dem two-party share):
-   MAE 4.7-5.9 pp, winner correct 83-88% for 2022, 2024, 2022+2024 and 'all' models
-   (leave-one-state-out); out-of-cycle error is larger (5.4-8.2 pp).
+ - Real validation vs certified results (CES features, Dem two-party share, six cycles
+   2014-2024, 10 training sets): every training set beats the mean-share baseline.
+   Leave-one-state-out error 4.7-6.7 pp; best: 'all' (5.1 pp, 89% winners correct),
+   2022+2024 (5.1 pp, 85%), 2014+2016+2018 (5.2 pp, 83%). Single older cycles:
+   2014 5.5, 2016 5.4, 2018 5.2 pp. Out-of-cycle error is larger (5.0-8.1 pp);
+   2018 is the hardest cycle to predict from the others (8.1 pp).
  - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
    equal or slightly worse than CES-only); CES-only is the recommended primary set.
  - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.

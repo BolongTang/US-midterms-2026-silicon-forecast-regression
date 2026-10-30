@@ -15,10 +15,10 @@ DATA
     targets are noisy.
  6. "Republican %" / "Democrat %" features come from the same respondents as the
     targets: partly circular. ACS features (no party info) are the clean check.
- 7. 2016-2020 CES rows have intent_sen (checked on download). 2020 has fewer Senate
-    answers (26,000 vs 43,000-46,000 in other years), so 2020 states are noisier.
- 7b. On real data, a model trained only on midterm cycles does worse than the
-    mean-share baseline when predicting a held-out cycle; cycle-to-cycle swings are large.
+ 7. 2014-2020 CES rows have intent_sen (checked on download). Senate answers per year:
+    2014 27,313; 2016 46,459; 2018 42,848; 2020 26,000; so 2014 and 2020 states are noisier.
+ 7b. Cycle-to-cycle swings are large: predicting 2018 from the other cycles has 8.1 pp
+    error (vs 5-6 pp for other cycles), so a single-cycle model is a poor guide to a new year.
 
 MODEL
  8. Only ~34 state-races per cycle. Ridge regression with LOO-chosen penalty is used

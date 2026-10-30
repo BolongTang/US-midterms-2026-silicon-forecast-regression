@@ -17,7 +17,7 @@ import pandas as pd
 import polars as pl
 from IPython.display import HTML, Markdown, display
 
-# "real" uses CES 2016-2024, ACS 2016-2024 and certified Senate results
+# "real" uses CES 2014-2024, ACS 2014-2024 and certified Senate results
 # (data/01-raw_data). "simulated" uses synthetic inputs in data/00-simulated_data.
 SOURCE = "real"
 
@@ -45,7 +45,7 @@ def pct(s):
 if SOURCE == "real":
     print("""::: {.callout-note}
 ## Real data
-Features come from the Cooperative Election Study (CES, 2016-2024) and the Census ACS 5-year
+Features come from the Cooperative Election Study (CES, 2014-2024) and the Census ACS 5-year
 estimates. Targets are CES pre-election Senate intent; accuracy is also checked against certified
 results from the MIT Election Lab. No 2026 survey exists, so 2026 features carry the 2024 profiles forward.
 :::""")
@@ -152,10 +152,37 @@ table(m)
 
 # Data
 
-- `data/01-raw_data/ces_2016_2020.parquet`, `ces_2022_2024.parquet`: CES respondents (Harvard Dataverse).
+- `data/01-raw_data/ces_2014_2020.parquet`, `ces_2022_2024.parquet`: CES respondents (Harvard Dataverse).
 - `data/01-raw_data/acs_state.parquet`: ACS 5-year state demographics (Census API).
-- `data/01-raw_data/senate_results.csv`: certified statewide Senate returns, 2016-2024 (MIT Election Lab).
+- `data/01-raw_data/senate_results.csv`: certified statewide Senate returns, 2014-2024 (MIT Election Lab).
 - `data/02-analysis_data/regression_*.parquet`: model metrics and the 2026 forecast.
+
+## Regressions on the older cycles (2014, 2016, 2018)
+
+Each older cycle can be used on its own, or together as `2014+2016+2018`. The table compares them with the
+newer pair (`2022+2024`) and with every cycle together (`all`), all scored against certified results.
+
+```{python}
+older = ["2014", "2016", "2018", "2014+2016+2018", "2022+2024", "all"]
+o = metrics.filter(pl.col("features") == fs, pl.col("train").is_in(older)).select(
+    pl.col("train").alias("Trained on"), pl.col("scheme").alias("Test"), pl.col("n").alias("Rows"),
+    pl.col("mae_dem").alias("Dem MAE vs survey (pp)"), pl.col("official_mae_dem2p").alias("Dem two-party MAE vs results (pp)"),
+    (100 * pl.col("official_winner_acc")).alias("Winner correct vs results (%)"),
+).with_columns(pl.col("Trained on").cast(pl.Enum(older))).sort("Trained on", "Test").with_columns(pl.col("Trained on").cast(pl.String)).to_pandas()
+table(o)
+```
+
+```{python}
+cmp_sets = ["2014+2016+2018", "2022+2024", "all"]
+cmp = (
+    preds.filter(pl.col("features") == fs, pl.col("train").is_in(cmp_sets))
+    .with_columns(dem2p=100 * pl.col("p_dem") / (pl.col("p_dem") + pl.col("p_rep")))
+    .pivot(on="train", index="st", values="dem2p").sort("st").select("st", *cmp_sets).to_pandas()
+)
+cmp.columns = ["State"] + [f"Dem two-party %, trained on {c}" for c in cmp_sets]
+display(Markdown("**2026 predictions: older cycles versus newer cycles versus all cycles**"))
+table(cmp)
+```
 
 # Method
 

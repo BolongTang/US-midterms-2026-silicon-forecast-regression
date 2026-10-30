@@ -207,7 +207,7 @@ def fig_metrics(metrics: pl.DataFrame):
         + labs(title="Prediction error by training set",
                subtitle="Bars: model error in Democratic share (points); diamonds: mean-share baseline",
                x="Training years", y="Mean absolute error (percentage points)")
-        + base_theme(figure_size=(10, 5), axis_text_x=element_text(angle=30, ha="right", color=INK2))
+        + base_theme(figure_size=(14, 5.5), axis_text_x=element_text(angle=30, ha="right", color=INK2))
     )  # fmt: skip
 
 

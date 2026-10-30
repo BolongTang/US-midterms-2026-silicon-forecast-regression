@@ -9,7 +9,7 @@
 # License: MIT
 # Pre-requisites: Run 01-download_data.py. Optional inputs that add features and
 #   an independent accuracy check (the script runs without them):
-#   - data/01-raw_data/ces_2016_2020.parquet from 01-download_data.py
+#   - data/01-raw_data/ces_2014_2020.parquet from 01-download_data.py
 #   - data/01-raw_data/acs_state.parquet    from 01b-download_acs.py
 #   - data/01-raw_data/senate_results.csv   certified results, columns:
 #       year, st, dem_votes, rep_votes, other_votes
@@ -23,9 +23,9 @@
 #   - The 2026 features carry the 2024 CES (and 2024 ACS) forward: no 2026
 #     survey exists.
 #
-# Years: every even year found in the data is used (2016-2024 when the extra
-#   CES extract and ACS years are downloaded). Training sets always include
-#   2022, 2024 and 2022+2024, plus "midterms" and "all" when more cycles exist.
+# Years: every even year found in the data is used (2014-2024 when the extra
+#   CES extract and ACS years are downloaded). Training sets: every single cycle,
+#   2022+2024 (the requested pair), 2014+2016+2018, "midterms" and "all".
 #
 # Run with: uv run scripts/05-regression.py            (real data if present,
 #                                                       else simulated)
@@ -71,21 +71,24 @@ def paths(source: str) -> dict[str, Path]:
         return {"ces": [d / "simulated_ces.parquet"], "acs": d / "simulated_acs.parquet",
                 "results": d / "simulated_senate_results.csv", "out": d}  # fmt: skip
     raw = ROOT / "data" / "01-raw_data"
-    return {"ces": [raw / "ces_2016_2020.parquet", raw / "ces_2022_2024.parquet"],
+    return {"ces": [raw / "ces_2014_2020.parquet", raw / "ces_2022_2024.parquet"],
             "acs": raw / "acs_state.parquet", "results": raw / "senate_results.csv",
             "out": ROOT / "data" / "02-analysis_data"}  # fmt: skip
 
 
 def train_sets(years: list[int]) -> dict[str, list[int]]:
-    """The user-requested sets (2022, 2024, 2022+2024), then wider ones if the data allow."""
-    sets = {str(y): [y] for y in (2022, 2024) if y in years}
-    if 2022 in years and 2024 in years:
-        sets["2022+2024"] = [2022, 2024]
-    midterms = [y for y in years if y % 4 == 2]
-    if len(midterms) > 1 and midterms not in sets.values():
-        sets["midterms"] = midterms
-    if len(years) > 2 and years not in sets.values():
-        sets["all"] = years
+    """Every single cycle, then the combinations of interest, where the data allow."""
+    sets = {str(y): [y] for y in years}
+    combos = {
+        "2014+2016+2018": [2014, 2016, 2018],
+        "2022+2024": [2022, 2024],
+        "midterms": [y for y in years if y % 4 == 2],
+        "all": list(years),
+    }
+    for label, ys in combos.items():
+        ys = [y for y in ys if y in years]
+        if len(ys) > 1 and ys not in sets.values() and (label != "2014+2016+2018" or len(ys) == 3):
+            sets[label] = ys
     return sets
 
 

@@ -132,9 +132,11 @@ def test_model_beats_mean_baseline_out_of_sample(real):
 #### Training sets and simulated end-to-end ####
 def test_train_sets_grow_with_available_years():
     assert reg.train_sets([2022, 2024]) == {"2022": [2022], "2024": [2024], "2022+2024": [2022, 2024]}
-    wide = reg.train_sets([2016, 2018, 2020, 2022, 2024])
-    assert wide["midterms"] == [2018, 2022]
-    assert wide["all"] == [2016, 2018, 2020, 2022, 2024]
+    wide = reg.train_sets([2014, 2016, 2018, 2020, 2022, 2024])
+    assert wide["2014+2016+2018"] == [2014, 2016, 2018]
+    assert wide["midterms"] == [2014, 2018, 2022]
+    assert wide["all"] == [2014, 2016, 2018, 2020, 2022, 2024]
+    assert {"2014", "2016", "2018", "2020", "2022", "2024", "2022+2024"} <= set(wide)
 
 
 def test_simulated_pipeline_runs_and_beats_baseline(tmp_path, monkeypatch):

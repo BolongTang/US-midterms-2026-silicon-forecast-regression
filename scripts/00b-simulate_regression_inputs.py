@@ -28,7 +28,7 @@ import numpy as np
 import polars as pl
 
 OUT_DIR = Path("data/00-simulated_data")
-YEARS = [2016, 2018, 2020, 2022, 2024]
+YEARS = [2014, 2016, 2018, 2020, 2022, 2024]
 N_PER_STATE = 300
 SEED = 853
 
@@ -39,7 +39,7 @@ STATES = [
     "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
 ]  # fmt: skip
 # National swing toward Democrats by year (logit scale)
-SWING = {2016: -0.1, 2018: 0.3, 2020: 0.1, 2022: 0.1, 2024: -0.15}
+SWING = {2014: -0.3, 2016: -0.1, 2018: 0.3, 2020: 0.1, 2022: 0.1, 2024: -0.15}
 
 
 def logistic(x):

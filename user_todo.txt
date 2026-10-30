@@ -2,15 +2,15 @@ USER TODO  (kept up to date by Claude; last updated 2026-10-30)
 =====================================================================
 Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your action.
 
-[DONE] ACS downloaded (255 state-years, 2016-2024) with the activated Census key
+[DONE] ACS downloaded (306 state-years, 2014-2024) with the activated Census key
       (passed inline, never stored). data/01-raw_data/acs_state.parquet.
 
-[DONE] CES 2016-2020 downloaded from Dataverse (data/01-raw_data/ces_2016_2020.parquet);
+[DONE] CES 2014-2020 downloaded from Dataverse (data/01-raw_data/ces_2014_2020.parquet);
       the real regression now runs on 2016-2024 (CES features only, no ACS yet).
 
 [DONE] Certified Senate results downloaded from MIT Election Lab via Dataverse
-      (scripts/01c-download_results.py -> data/01-raw_data/senate_results.csv, 157
-      state-races, 2016-2024). Review the selection rules at the top of that script.
+      (scripts/01c-download_results.py -> data/01-raw_data/senate_results.csv, 189
+      state-races, 2014-2024). Review the selection rules at the top of that script.
 
 [DONE] The Quarto page (paper/regression.qmd) now runs on REAL data (SOURCE = "real") and
       is rendered to docs/. Real figures: paper/figures/real_*.png.
@@ -50,6 +50,10 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
 
 [DO]  quarto warns about output-dir ../docs when rendering paper/ (project dir is paper/).
       Harmless here; to silence it, move _quarto.yml to the repo root.
+
+[DECIDE] Which training set should headline the 2026 forecast? Real-data accuracy favors
+      'all' (six cycles) and 2022+2024; Claude's page still headlines 2022+2024 (your
+      requested pair). Switch to 'all'?
 
 Done so far (for reference):
   - Regression pipeline, ACS downloader (with API-key slot), simulator, tests.
