@@ -258,9 +258,27 @@ def test_model_is_selected_on_validation_and_scored_on_untouched_holdout(tmp_pat
     assert set(sel.filter(pl.col("phase") == "holdout")["test_years"]) == {holdout}
     chosen = sel.filter(pl.col("selected"), pl.col("phase") == "validation")
     assert chosen.height == 1
-    val = sel.filter(pl.col("phase") == "validation")
+    val = sel.filter(pl.col("phase") == "validation", pl.col("window") == reg.HEADLINE_WINDOW)  # only these are eligible
     assert chosen["official_mae_dem2p"][0] == val["official_mae_dem2p"].min()  # lowest validation error
     fs, window = out["selected"]
-    assert fs in out["feature_sets"] and window in reg.WINDOWS
+    assert fs in out["feature_sets"] and window == "all"  # headline trains on every cycle by decision
+    assert out["headline_train"] == "all"
     assert out["headline_train"] in set(out["preds"]["train"])
     assert out["headline_train"] in out["sets"]
+
+
+def test_midterm_only_models_train_on_midterm_cycles_only(tmp_path, monkeypatch):
+    out = run_simulated(tmp_path, monkeypatch)
+    mt = out["midterm"]
+    mids = [y for y in out["tables"]["lagged"]["year"].unique().to_list() if y % 4 == 2]
+    only = mt.filter(pl.col("model") == "midterm-only", pl.col("test_year") != "pooled")
+    for train_years, test_year in zip(only["train_years"], only["test_year"]):
+        used = [int(y) for y in train_years.split(",")]
+        assert all(y in mids and y < int(test_year) for y in used)  # midterms, strictly earlier
+    assert {int(y) for y in only["test_year"]} == set(mids[1:])  # the first midterm is never a test cycle
+    assert set(mt["model"]) == {"midterm-only", "all cycles"}
+    assert (mt.filter(pl.col("test_year") == "pooled")["n"] > 0).all()
+    # the 2026 forecast from midterm-only models exists for every race and feature set
+    f = out["preds"].filter(pl.col("train") == "midterms")
+    assert f["st"].n_unique() == len(reg.SENATE_STATES_2026)
+    assert set(f["features"]) == set(out["feature_sets"])

@@ -1,4 +1,4 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (validation-based model selection))
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (coding decisions, midterm-only models, all-cycle headline))
 =====================================================================
 Goal: forecast every 2026 US Senate race (35 contests) with a state-level
 regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
@@ -36,45 +36,32 @@ Files
  data/00-simulated_data/regression_*.parquet simulated-data outputs
  user_todo.txt / caveats.txt / summary.txt  tracking files (this one included)
 
-Status
- - Every one of the 35 2026 races has D/R/Undecided percentages (sum to 100%) under every
-   training set, on simulated and on real 2022/2024 CES data.
-
- - Pipeline runs end to end on simulated data (--source simulated) and on the real
-   2022/2024 CES.
- - Real-data results so far (CES features only; targets are CES intent): Dem-share
-   MAE about 4.6-5.7 pp vs 7-10 pp for a mean baseline; winner accuracy 82-94%.
-   
- - CES 2014-2024 now downloaded; the real regression runs on all five cycles (CES
-   features only). Real-data leave-one-cycle-out error for the 'midterms' set is
-   WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
- - LEAKAGE AUDIT (details in paper/regression.qmd): same-year features, ACS vintage,
-   same-cycle information in leave-one-state-out, time-travel schemes, a baseline that
-   saw the held-out state, and a 2026 forecast trained on a different feature timing.
-   All fixed or labelled; certified results are never used to fit a model.
- - HEADLINE MODEL IS CHOSEN BY VALIDATION (scripts/05 select_model): 4 feature sets x 3 training
-   windows = 12 candidates; validation cycles 2018, 2020, 2022 (forward-chaining), holdout 2024
-   never used to choose. Real data: chosen = ces+prior, all earlier cycles (validation 4.94 pp,
-   89% winners); holdout 2024: 4.3 pp, 88% winners (29 of 33). 2026 forecast headline uses it.
- - Honest real-data accuracy (lagged features, forward-chaining, 'all' training set):
-   Dem two-party MAE 5.9 pp, winners correct 88%. Leaky same-year features gave 5.2 pp.
- - SIMPLE BASELINES on identical state-races (139 races, 2016-2024, vs certified results):
-     last Senate result 89.9% winners / 5.5 pp,  last presidential result 89.2% / 4.3 pp,
-     party ID + leaners 87.8% / 5.1 pp,  ridge (ces) 87.1% / 5.6 pp,  party ID (pid3)
-     80.6% / 6.2 pp,  majority class and mean share 52.5%.
-   => Survey-only regression does NOT beat the best simple baselines at calling winners.
- - PREVIOUS RESULTS AS FEATURES (feature sets 'prior' and 'ces+prior': last presidential
-   and last Senate Dem two-party share, strictly earlier years; Senate share falls back to
-   the presidential one + a flag where a state had no earlier Senate race):
-   forward-chaining, 'all' training set, lagged: ces 5.9 pp / 88% winners, ces+acs 5.8 / 88%,
-   prior 5.0 / 90%, ces+prior 5.0 / 90%. On the 139 common races: prior 89.9% winners
-   (ties the best baseline, last Senate result) and 5.1 pp; ces+prior 89.2% / 4.9 pp;
-   last presidential result alone still has the lowest error (4.3 pp).
-   => Previous results lift the regression to the level of the best baselines but not
-      clearly past them; the survey adds little once previous results are known.
- - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
-   equal or slightly worse than CES-only); CES-only is the recommended primary set.
- - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.
+Status (real data, CES 2012-2024, ACS, certified Senate + presidential results)
+ - Coding decisions: independents who caucus with a party are coded by it (King ME, Sanders VT ->
+   Democrat; Osborn NE does not caucus, stays "other"); special and regular races are treated
+   alike (state-year races with a D and an R candidate are pooled). The CES Senate question
+   already puts King and Sanders in its Democratic slot. This fixed Maine 2018/2024 (previously
+   scored with a near-zero Democratic share) and added Vermont 2018/2024: 191 state-races.
+ - HEADLINE: trains on ALL SIX cycles (2014-2024), by decision. The feature set is chosen by
+   validation (scripts/05 select_model): validation cycles 2018/2020/2022, holdout 2024 never used
+   to choose. Chosen = ces+acs (validation 4.92 pp, 88% winners); on the 2024 holdout 5.6 pp, 88%
+   winners. ces+prior was a near-tie (4.97 pp); on the holdout 'prior' alone was best (2.8 pp).
+ - LEAKAGE AUDIT (paper/regression.qmd): same-year features, ACS vintage, same-cycle information
+   in leave-one-state-out, time-travel schemes, a baseline that saw the held-out state, and a
+   forecast trained on a different feature timing. Fixed or labelled; certified results never fit
+   a model. Same-year features flattered error by about 0.5 pp (5.1 vs 5.6 pp, 'ces', all cycles).
+ - Honest accuracy (lagged features, forward-chaining, all six cycles, Dem two-party vs results):
+   ces 5.6 pp / 89% winners, ces+acs 5.5 / 89%, prior 5.0 / 89%, ces+prior 4.9 / 89%.
+ - SIMPLE BASELINES on identical races (141, 2016-2024): last presidential result 90.8% winners /
+   4.0 pp; party ID + leaners 89.4% / 4.7; ridge prior 89.4% / 5.0; ridge ces & ces+acs 88.7% / 5.3;
+   ridge ces+prior 88.7% / 4.8; last Senate result 87.9% / 5.6; party ID (pid3) 82.3% / 5.7;
+   majority class and mean share 50.4%. The regression does not clearly beat the best baselines;
+   its distinct value is the three-way share forecast including Undecided.
+ - MIDTERM-ONLY MODELS (fit on 2014, 2018, 2022; predict 2026): worse than all-cycle models on the
+   same later midterms (pooled ces+acs 6.3 vs 5.1 pp; ces 6.1 vs 4.9), because they train on only
+   one or two cycles. For 2026 they flip no winners relative to the headline (35 races compared).
+ - 2026 forecast (headline): 14 Democratic, 21 Republican wins; every race has D/R/Undecided
+   percentages summing to 100% under every feature set and training set.
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)

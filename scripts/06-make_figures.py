@@ -87,7 +87,7 @@ def load(source: str = "simulated", root: Path = Path(".")) -> dict:
             "summary": summary, "by_year": reg.summarise_comparison(out["comparison"], by_year=True),
             "baseline_forecast": out["baseline_forecast"], "oos": oos, "source": source,
             "oos_label": label, "oos_features": fs, "selection": out["selection"],
-            "selected": out["selected"], "headline_train": out["headline_train"], "has_official": has_official}  # fmt: skip
+            "selected": out["selected"], "headline_train": out["headline_train"], "midterm": out["midterm"], "has_official": has_official}  # fmt: skip
 
 
 def pick(preds: pl.DataFrame, train: str, features: str | None = None) -> pd.DataFrame:
@@ -249,6 +249,26 @@ def fig_baselines(summary: pl.DataFrame):
     )  # fmt: skip
 
 
+def fig_midterm(preds: pl.DataFrame, features: str):
+    """2026 forecast from midterm-only models against the all-cycle model, state by state."""
+    a = pick(preds, "all", features)[["st", "dem2p"]].rename(columns={"dem2p": "all_cycles"})
+    m = pick(preds, "midterms", features)[["st", "dem2p"]].rename(columns={"dem2p": "midterm_only"})
+    d = a.merge(m, on="st")
+    d["gap"] = (d["midterm_only"] - d["all_cycles"]).abs()
+    return (
+        ggplot(d, aes("all_cycles", "midterm_only"))
+        + geom_abline(slope=1, intercept=0, color=GREY, linetype="dashed")
+        + geom_point(color=BLUE, size=2.2, alpha=0.8, stroke=0)
+        + geom_text(aes(label="st"), data=d[d["gap"] > 0.06], size=7, color=INK, nudge_y=0.012)
+        + scale_x_continuous(labels=lambda v: [f"{x:.0%}" for x in v])
+        + scale_y_continuous(labels=lambda v: [f"{x:.0%}" for x in v])
+        + labs(title="2026: midterm-only model versus all-cycle model",
+               subtitle="Predicted Democratic two-party share; midterm-only is fit on 2014, 2018, 2022\nStates labelled where the two differ by more than 6 points",
+               x="All six cycles (headline)", y="Midterm cycles only")
+        + base_theme(figure_size=(6, 5.6))
+    )  # fmt: skip
+
+
 def all_figures(res: dict) -> dict:
     return {
         "forecast_bars": fig_forecast(res["preds"], res["headline_train"], res["oos_features"]),
@@ -258,6 +278,7 @@ def all_figures(res: dict) -> dict:
         "error_by_model": fig_metrics(res["metrics"]),
         "leakage_check": fig_leakage(res["metrics"]),
         "baselines": fig_baselines(res["summary"]),
+        "midterm_vs_all": fig_midterm(res["preds"], res["oos_features"]),
     }
 
 

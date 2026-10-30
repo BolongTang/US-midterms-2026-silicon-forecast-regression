@@ -18,14 +18,6 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
 [DONE] Headline model is now chosen by validation performance (ces+prior, all earlier cycles),
       reported on the untouched 2024 holdout. Tell Claude if you prefer a different rule.
 
-[DECIDE] Independents who caucus with a party (King ME, Sanders VT, Osborn NE):
-      code them by candidate ("Democratic-aligned") or by party label?
-      Currently by label, which mis-codes them. Affects the official-results check only.
-
-[DECIDE] Nebraska 2024 (and GA 2020): the official-results check uses the regular race,
-      except NE 2024 where only the special (Ricketts v. Love) has a Democrat. Does CES
-      NE intent refer to that race? Keep, or drop NE 2024 from the check?
-
 [DECIDE] Midterm swing for 2026: the model learns a midterm effect only from
       midterm cycles (2018, 2022, ...). Do you want a manual adjustment
       (e.g. +/- X points toward the out-party)?  Default: none.
@@ -56,8 +48,18 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
       on previous results) instead of the three-way log-ratio; the raw 'last presidential
       result' baseline has lower error than the ridge on the same information.
 
-[DECIDE] Independents/others: currently lumped with Undecided (see caveats.txt #3, #11). Do you want
-      a separate third-party/independent class, or Undecided split from 'Other'?
+[DECIDE] Non-caucusing independents and third parties are still lumped with Undecided in the
+      three-way target (caveats.txt #3). Keep, or split 'Undecided' from 'Other/third party'?
+
+[DONE, per your instructions] (1) Independents who caucus with a party are coded by party in the
+      certified results (King ME, Sanders VT -> Democrat; Osborn NE does not caucus, so he stays
+      'other' and NE 2024's regular race has no Democrat). CES already codes King/Sanders as
+      Democratic. (2) Special and regular races are treated alike and pooled (GA 2020 etc.).
+      (3) Midterm-only models (2014, 2018, 2022) fitted and used to predict 2026; they do worse than
+      all-cycle models. (4) The headline trains on all six cycles; the feature set is chosen by
+      validation (ces+acs, a near-tie with ces+prior).
+      Please confirm Osborn: if you want him treated as Democratic-aligned, say so (it is a
+      one-line change in scripts/01c-download_results.py: CAUCUS_PARTY).
 
 Done so far (for reference):
   - Leakage audit + fixes, simple baselines, CES 2012 / ACS 2012 / presidential results.

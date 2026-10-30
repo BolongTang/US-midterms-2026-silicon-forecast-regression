@@ -163,6 +163,15 @@ table(m)
 - `data/01-raw_data/senate_results.csv`: certified statewide Senate returns, 2014-2024 (MIT Election Lab).
 - `data/02-analysis_data/regression_*.parquet`: model metrics and the 2026 forecast.
 
+## How independents and special races are coded
+
+- **Independents who caucus with a party** are coded by that party in the certified results: Angus King (Maine) and
+  Bernie Sanders (Vermont) count as Democrats. The CES Senate question already places them in its Democratic slot.
+  Independents who do not caucus with a party (such as Dan Osborn in Nebraska 2024) stay in *other*.
+- **Special and regular races are treated alike.** A race counts if, after that coding, it has both a Democratic and
+  a Republican candidate; a state with two such races in one year (for example Georgia 2020) pools their votes.
+  Nebraska 2024's regular race (Fischer v. Osborn) has no Democrat, so only its special race (Ricketts v. Love) counts.
+
 ## Regressions on the older cycles (2014, 2016, 2018)
 
 Each older cycle can be used on its own, or together as `2014+2016+2018`. The table compares them with the
@@ -307,9 +316,10 @@ The headline forecast is not picked by looking at the final results. It is chose
 **validation performance**, then reported on a **holdout** cycle that played no part in the choice.
 
 - **Candidates:** four feature sets (`ces`, `ces+acs`, `prior`, `ces+prior`) crossed with three training windows
-  (all earlier cycles, the last two, the last one): 12 models.
+  (all earlier cycles, the last two, the last one): 12 models. By project decision the headline trains on **all six
+  cycles**, so only the four `all` candidates are eligible to be chosen; the other windows are shown for reference.
 - **Validation:** each candidate predicts 2018, 2020 and 2022, trained only on earlier cycles (forward-chaining).
-  The winner is the candidate with the lowest error in the Democratic two-party share against certified results
+  The winner among the eligible candidates is the one with the lowest error in the Democratic two-party share against certified results
   (winner accuracy breaks ties).
 - **Holdout:** 2024, the most recent cycle, is predicted by every candidate for transparency but never used to choose.
 
@@ -327,12 +337,47 @@ table(tab)
 fs_sel, win_sel = res["selected"]
 chosen = sel.filter(pl.col("selected"), pl.col("phase") == "holdout").row(0, named=True)
 best_hold = sel.filter(pl.col("phase") == "holdout").sort("official_mae_dem2p").row(0, named=True)
-print(f"""**Chosen:** `{fs_sel}` trained on {win_sel} earlier cycles (the `{headline}` set for 2026). On the untouched 2024 holdout it has an
+print(f"""**Chosen:** `{fs_sel}` trained on {'all earlier cycles' if win_sel == 'all' else win_sel} (the `{headline}` set for 2026). On the untouched 2024 holdout it has an
 error of {chosen['official_mae_dem2p']:.1f} points and calls {100*chosen['official_winner_acc']:.0f}% of winners.
 The holdout's own best candidate was `{best_hold['features']}` ({best_hold['window']}) at {best_hold['official_mae_dem2p']:.1f} points; that is expected,
 because validation picks the best candidate on average, not the best on one cycle. With only three validation
 cycles and about 33 races each, differences of a point or so between candidates are within noise, so averaging
 several good models would be a reasonable next step.""")
+```
+
+# Midterm-only models
+
+Midterm electorates differ from presidential-year ones, so a second family of models is fit on **midterm cycles
+only** (2014, 2018, 2022) and used to predict 2026. They are compared with the all-cycle models on the same
+later midterms: 2018 is predicted from 2014, and 2022 from 2014 and 2018. The all-cycle models may use every
+earlier cycle, including presidential years.
+
+```{python}
+mt = res["midterm"].with_columns(
+    (100 * pl.col("official_winner_acc")).alias("acc")
+).select(pl.col("features").alias("Features"), pl.col("model").alias("Model"), pl.col("test_year").alias("Test cycle"),
+         pl.col("train_years").alias("Trained on"), pl.col("n").alias("Races"),
+         pl.col("official_mae_dem2p").alias("Dem two-party error (pp)"), pl.col("acc").alias("Winners correct (%)")).sort("Features", "Test cycle", "Model").to_pandas()
+table(mt)
+```
+
+```{python}
+#| output: asis
+pool = res["midterm"].filter(pl.col("test_year") == "pooled", pl.col("features") == fs)
+mo = pool.filter(pl.col("model") == "midterm-only").row(0, named=True)
+ac = pool.filter(pl.col("model") == "all cycles").row(0, named=True)
+both = figs.pick(preds, "midterms", fs).merge(head[["st", "dem2p"]], on="st", suffixes=("_mid", "_all"))
+flips = int(((both["dem2p_mid"] > 0.5) != (both["dem2p_all"] > 0.5)).sum())
+print(f"""**Reading.** With `{fs}` features, the midterm-only model has an error of {mo['official_mae_dem2p']:.1f} points on the 2018 and 2022
+midterms against {ac['official_mae_dem2p']:.1f} for the all-cycle model. It trains on only one or two cycles, so it has far
+less data, and the presidential-year cycles evidently still help. For 2026 the two models call {flips} of
+{len(both)} races differently.""")
+```
+
+```{python}
+#| fig-cap: "2026 predicted Democratic two-party share from the midterm-only and all-cycle models."
+#| fig-alt: "Scatter plot of the midterm-only prediction against the all-cycle prediction for each state, with a 45 degree line."
+plots["midterm_vs_all"]
 ```
 
 # Method
