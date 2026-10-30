@@ -40,7 +40,8 @@ SIMULATED DATA
     real 2026 accuracy. Do not quote simulated numbers as findings.
 
 SITE
-16. The Quarto page and figures currently show simulated results (banner on the page).
+16. The Quarto page and figures show REAL-data results (SOURCE = "real"); simulated PNGs
+    (paper/figures/simulated_*) are kept only to demonstrate the pipeline.
     The tile map saturates colours beyond 20%/80% Dem two-party share.
 
 ENVIRONMENT

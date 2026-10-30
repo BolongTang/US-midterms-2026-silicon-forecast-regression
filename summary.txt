@@ -36,8 +36,7 @@ Files
 Status
  - Every one of the 35 2026 races has D/R/Undecided percentages (sum to 100%) under every
    training set, on simulated and on real 2022/2024 CES data.
- - Figures and the Quarto page are built from SIMULATED data; flip SOURCE to "real" in
-   paper/regression.qmd (and run 06-make_figures.py --source real) when real inputs exist.
+
  - Pipeline runs end to end on simulated data (--source simulated) and on the real
    2022/2024 CES.
  - Real-data results so far (CES features only; targets are CES intent): Dem-share
@@ -51,8 +50,7 @@ Status
    (leave-one-state-out); out-of-cycle error is larger (5.4-8.2 pp).
  - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
    equal or slightly worse than CES-only); CES-only is the recommended primary set.
- - Real-data figures: paper/figures/real_*.png. The Quarto page still shows simulated
-   data until SOURCE is switched to "real" (see user_todo.txt).
+ - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)

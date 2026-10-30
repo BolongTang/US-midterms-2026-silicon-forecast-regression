@@ -12,9 +12,8 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
       (scripts/01c-download_results.py -> data/01-raw_data/senate_results.csv, 157
       state-races, 2016-2024). Review the selection rules at the top of that script.
 
-[DO]  Real regression + real figures are built (paper/figures/real_*.png). To put real
-      results on the website: in paper/regression.qmd change SOURCE = "simulated" to "real", run
-      uv run scripts/06-make_figures.py --source real and uv run quarto render paper.
+[DONE] The Quarto page (paper/regression.qmd) now runs on REAL data (SOURCE = "real") and
+      is rendered to docs/. Real figures: paper/figures/real_*.png.
 
 [DECIDE] Which 2026 feature source is primary: CES-only, or CES+ACS?
       Real data: ACS does NOT improve accuracy (e.g. 2022+2024, leave-one-state-out Dem
