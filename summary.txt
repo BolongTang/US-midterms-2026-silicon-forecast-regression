@@ -1,0 +1,60 @@
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (figures + site added))
+=====================================================================
+Goal: forecast every 2026 US Senate race (35 contests) with a state-level
+regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
+Senate seats are decided by statewide POPULAR vote (no Electoral College), so
+vote share per state is the right target.
+
+Method (scripts/05-regression.py)
+ - Unit of analysis: one row per state per election cycle.
+ - Features: weighted CES state profile (male, white, Black, Hispanic, college,
+   mean age, % Republican, % Democrat) + ACS demographics (optional) + midterm flag.
+ - Targets: three shares summing to 1: Democratic, Republican, Undecided/other.
+ - Model: ridge regression on additive log-ratios (multi-class, stays on the
+   simplex), penalty by leave-one-out CV.
+ - Three training sets for the 2026 forecast: 2022 only, 2024 only, 2022+2024.
+   Extra sets "midterms" and "all" appear when 2016-2020 data are present.
+ - Tests: leave-one-state-out, predict other cycles, leave-one-cycle-out; MAE of
+   each share vs. a mean-share baseline; winner accuracy; and, when
+   data/01-raw_data/senate_results.csv exists, error vs. certified two-party share.
+ - 2026 features carry forward the 2024 CES (and ACS).
+
+Files
+ scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
+ scripts/01-download_data.py                CES 2016-2024 (2016-2020 -> ces_2016_2020.parquet)
+  scripts/01c-download_results.py            certified Senate results 2016-2024 (MIT Election Lab)
+ scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
+ scripts/05-regression.py                   features, models, metrics, 2026 forecast
+ scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
+ paper/regression.qmd                       Quarto page on the regression forecast (SOURCE switch)
+ docs/                                      rendered site (quarto render paper)
+ tests/test_regression.py, test_figures.py unit + simulated end-to-end + real-data tests
+ data/02-analysis_data/regression_*.parquet real-data outputs (CES features only so far)
+ data/00-simulated_data/regression_*.parquet simulated-data outputs
+ user_todo.txt / caveats.txt / summary.txt  tracking files (this one included)
+
+Status
+ - Every one of the 35 2026 races has D/R/Undecided percentages (sum to 100%) under every
+   training set, on simulated and on real 2022/2024 CES data.
+
+ - Pipeline runs end to end on simulated data (--source simulated) and on the real
+   2022/2024 CES.
+ - Real-data results so far (CES features only; targets are CES intent): Dem-share
+   MAE about 4.6-5.7 pp vs 7-10 pp for a mean baseline; winner accuracy 82-94%.
+   
+ - CES 2016-2024 now downloaded; the real regression runs on all five cycles (CES
+   features only). Real-data leave-one-cycle-out error for the 'midterms' set is
+   WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
+ - Real validation vs certified results (CES features only, Dem two-party share):
+   MAE 4.7-5.9 pp, winner correct 83-88% for 2022, 2024, 2022+2024 and 'all' models
+   (leave-one-state-out); out-of-cycle error is larger (5.4-8.2 pp).
+ - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
+   equal or slightly worse than CES-only); CES-only is the recommended primary set.
+ - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.
+
+Run
+ uv run scripts/05-regression.py                    (real if present, else simulated)
+ uv run scripts/05-regression.py --source simulated
+ uv run scripts/06-make_figures.py --source simulated
+ uv run quarto render paper
+ uv run pytest tests/test_regression.py tests/test_figures.py
