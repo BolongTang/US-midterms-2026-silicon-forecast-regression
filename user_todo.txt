@@ -43,6 +43,14 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
 [DO]  Run `uv lock` locally and commit uv.lock (scikit-learn was added to
       pyproject.toml; uv sync was too slow in Claude's sandbox).
 
+[DO]  Grant WRITE access to the GitHub app/connector for harryyz/US-midterms-2026-silicon-forecast
+      (Contents: read & write; Pull requests: read & write). Both `git push` (403) and the
+      GitHub API push_files call (403 "Resource not accessible by integration") were
+      refused, although branch listing works (read-only). Install/adjust the Claude GitHub
+      App: https://github.com/apps/claude/installations/select_target
+      Until then all work is committed locally on branch Regression only (not on GitHub).
+      Then tell Claude to push.
+
 Done so far (for reference):
   - Regression pipeline, ACS downloader (with API-key slot), simulator, tests.
   - Pipeline runs on simulated data via --source simulated.
