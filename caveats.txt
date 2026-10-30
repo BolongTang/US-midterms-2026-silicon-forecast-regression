@@ -1,0 +1,42 @@
+CAVEATS  (kept up to date by Claude; last updated 2026-10-30)
+=====================================================================
+DATA
+ 1. No 2026 data exists. 2026 features are the 2024 CES (and 2024 ACS) carried
+    forward. State demographics and partisanship will have drifted.
+ 2. The regression targets are CES pre-election Senate INTENT, not votes. This is
+    the only source with an "undecided" answer. Intent over-represents people
+    who answer surveys, and self-reported vote skews toward winners.
+ 3. "Undecided" = Not Sure + No One + third-party/other. It is not "will not vote";
+    turnout is not modelled. Predicted shares are shares of survey respondents,
+    not of ballots cast.
+ 4. Certified results (when provided) only check the Dem share of the TWO-PARTY
+    vote; they cannot validate the Undecided share.
+ 5. Small states have few respondents (WY ~95 in CES 2024), so their features and
+    targets are noisy.
+ 6. "Republican %" / "Democrat %" features come from the same respondents as the
+    targets: partly circular. ACS features (no party info) are the clean check.
+ 7. 2016-2020 CES rows may lack some columns (e.g. intent_sen); cycles without
+    intent_sen are skipped automatically. Not yet checked on real data.
+
+MODEL
+ 8. Only ~34 state-races per cycle. Ridge regression with LOO-chosen penalty is used
+    to limit overfitting; with 15 features on 34 rows (2022-only or 2024-only models)
+    the fit is fragile. More cycles (midterms / all) should be steadier.
+ 9. Midterm effect is a single 0/1 flag, learned only from midterm cycles in the
+    training set. The 2024-only model cannot learn it (flag is constant).
+10. No candidate-level information (incumbency, quality, spending, scandals, specials).
+    Each state is treated as a generic Democrat-vs-Republican contest.
+11. Independents backed by a party (King, Sanders, Osborn) are coded by party label.
+12. Nebraska 2024 had two races; CES records one Senate vote.
+13. Predictions are point estimates; no uncertainty intervals yet.
+
+SIMULATED DATA
+14. Simulated results (data/00-simulated_data/) come from a known generating
+    process. High accuracy there shows the code works; it says nothing about
+    real 2026 accuracy. Do not quote simulated numbers as findings.
+
+ENVIRONMENT
+15. Claude's sandbox blocks api.census.gov and dataverse.harvard.edu, so ACS and
+    extra CES years are untested against the live sources. The ACS variable codes
+    (B01001, B01002, B02001, B03003, B15003, B19013) were written from knowledge of
+    the Census API and need a first real run to confirm.
