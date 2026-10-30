@@ -42,8 +42,11 @@ Status
  - Real-data results so far (CES features only; targets are CES intent): Dem-share
    MAE about 4.6-5.7 pp vs 7-10 pp for a mean baseline; winner accuracy 82-94%.
    Not yet validated against certified results.
- - Waiting on: Census API key + ACS download, CES 2016-2020 download, certified
-   results file (see user_todo.txt).
+ - CES 2016-2024 now downloaded; the real regression runs on all five cycles (CES
+   features only). Real-data leave-one-cycle-out error for the 'midterms' set is
+   WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
+ - Waiting on: ACS download (CENSUS_API_KEY not visible in the current session) and the
+   certified results file (see user_todo.txt).
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)

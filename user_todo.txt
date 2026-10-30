@@ -2,16 +2,15 @@ USER TODO  (kept up to date by Claude; last updated 2026-10-30)
 =====================================================================
 Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your action.
 
-[DO]  Get a free Census API key: https://api.census.gov/data/key_signup.html
-      Put it in .env as CENSUS_API_KEY=... (copy .env.example to .env first).
-      Then run: uv run scripts/01b-download_acs.py
-      (Claude's sandbox blocks api.census.gov, so this has to run on your side
-      or after the environment's Network access allows that host.)
+[DO]  ACS download needs CENSUS_API_KEY, which is NOT visible in the current Claude
+      session (environment variables added after a session starts only reach NEW
+      sessions). Either start a new session on this repo and ask Claude to run
+      `python scripts/01b-download_acs.py`, or run it yourself with the key in .env.
+      The script batches variables (limit 50 per request; it uses 12 now).
+      Note: ACS is not on Harvard Dataverse; it comes only from api.census.gov.
 
-[DO]  Re-run the CES download to add 2016/2018/2020:
-      uv run scripts/01-download_data.py   -> creates data/01-raw_data/ces_2016_2020.parquet
-      (Claude's sandbox blocks dataverse.harvard.edu.)
-      Commit the new parquet files afterwards.
+[DONE] CES 2016-2020 downloaded from Dataverse (data/01-raw_data/ces_2016_2020.parquet);
+      the real regression now runs on 2016-2024 (CES features only, no ACS yet).
 
 [DO]  Provide certified Senate results as data/01-raw_data/senate_results.csv
       Columns: year, st, dem_votes, rep_votes, other_votes   (2016-2024 cycles)
