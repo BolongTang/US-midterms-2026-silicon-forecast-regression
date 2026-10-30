@@ -22,6 +22,7 @@ Method (scripts/05-regression.py)
 Files
  scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
  scripts/01-download_data.py                CES 2016-2024 (2016-2020 -> ces_2016_2020.parquet)
+  scripts/01c-download_results.py            certified Senate results 2016-2024 (MIT Election Lab)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
  scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
@@ -41,12 +42,14 @@ Status
    2022/2024 CES.
  - Real-data results so far (CES features only; targets are CES intent): Dem-share
    MAE about 4.6-5.7 pp vs 7-10 pp for a mean baseline; winner accuracy 82-94%.
-   Not yet validated against certified results.
+   
  - CES 2016-2024 now downloaded; the real regression runs on all five cycles (CES
    features only). Real-data leave-one-cycle-out error for the 'midterms' set is
    WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
- - Waiting on: ACS download (CENSUS_API_KEY not visible in the current session) and the
-   certified results file (see user_todo.txt).
+ - Real validation vs certified results (CES features only, Dem two-party share):
+   MAE 4.7-5.9 pp, winner correct 83-88% for 2022, 2024, 2022+2024 and 'all' models
+   (leave-one-state-out); out-of-cycle error is larger (5.4-8.2 pp).
+ - Waiting on: ACS download (CENSUS_API_KEY not visible in the current session).
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)

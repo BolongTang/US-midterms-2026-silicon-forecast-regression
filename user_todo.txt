@@ -12,13 +12,11 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
 [DONE] CES 2016-2020 downloaded from Dataverse (data/01-raw_data/ces_2016_2020.parquet);
       the real regression now runs on 2016-2024 (CES features only, no ACS yet).
 
-[DO]  Provide certified Senate results as data/01-raw_data/senate_results.csv
-      Columns: year, st, dem_votes, rep_votes, other_votes   (2016-2024 cycles)
-      Source suggestion: MIT Election Lab / state certified results.
-      Claude does not type results from memory.
-      Without this file, accuracy is measured only against CES respondents.
+[DONE] Certified Senate results downloaded from MIT Election Lab via Dataverse
+      (scripts/01c-download_results.py -> data/01-raw_data/senate_results.csv, 157
+      state-races, 2016-2024). Review the selection rules at the top of that script.
 
-[DO]  Run the real regression once the three inputs above exist:
+[DO]  Run the real regression once the ACS file exists:
       uv run scripts/05-regression.py --source real
       and tell Claude to review the metrics (data/02-analysis_data/regression_metrics.parquet).
       Then in paper/regression.qmd change SOURCE = "simulated" to "real", run
@@ -31,8 +29,9 @@ Items are in priority order. [DECIDE] = needs your choice. [DO] = needs your act
       code them by candidate ("Democratic-aligned") or by party label?
       Currently by label, which mis-codes them. Affects the official-results check only.
 
-[DECIDE] Nebraska 2024 had two Senate races; CES has one vote per respondent.
-      Treat as one race (current) or drop NE 2024 from training?
+[DECIDE] Nebraska 2024 (and GA 2020): the official-results check uses the regular race,
+      except NE 2024 where only the special (Ricketts v. Love) has a Democrat. Does CES
+      NE intent refer to that race? Keep, or drop NE 2024 from the check?
 
 [DECIDE] Midterm swing for 2026: the model learns a midterm effect only from
       midterm cycles (2018, 2022, ...). Do you want a manual adjustment

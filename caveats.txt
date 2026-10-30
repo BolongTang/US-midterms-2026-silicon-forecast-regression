@@ -9,7 +9,7 @@ DATA
  3. "Undecided" = Not Sure + No One + third-party/other. It is not "will not vote";
     turnout is not modelled. Predicted shares are shares of survey respondents,
     not of ballots cast.
- 4. Certified results (when provided) only check the Dem share of the TWO-PARTY
+ 4. Certified results (MIT Election Lab, 2016-2024) only check the Dem share of the TWO-PARTY
     vote; they cannot validate the Undecided share.
  5. Small states have few respondents (WY ~95 in CES 2024), so their features and
     targets are noisy.
@@ -29,7 +29,9 @@ MODEL
 10. No candidate-level information (incumbency, quality, spending, scandals, specials).
     Each state is treated as a generic Democrat-vs-Republican contest.
 11. Independents backed by a party (King, Sanders, Osborn) are coded by party label.
-12. Nebraska 2024 had two races; CES records one Senate vote.
+12. Two races in one state-year (GA 2020, NE 2024): the certified check uses the regular
+    race, except NE 2024 (special only has a Democrat). State-years with no Dem-v-Rep
+    contest (CA 2016/2018, ME 2018, VT 2018/2024, ...) are dropped from the check.
 13. Predictions are point estimates; no uncertainty intervals yet.
 
 SIMULATED DATA
