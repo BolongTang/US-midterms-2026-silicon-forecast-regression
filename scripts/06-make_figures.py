@@ -70,8 +70,8 @@ def load(source: str = "simulated", root: Path = Path(".")) -> dict:
 
     # Out-of-sample predictions: forward-chaining on lagged features, widest training set
     sets, fsets = out["sets"], out["feature_sets"]
-    label = "all" if "all" in sets else "2022+2024"
-    fs = "ces+acs" if "ces+acs" in fsets else "ces"
+    fs, _ = out["selected"]  # chosen by validation performance, not by looking at the test
+    label = "all" if "all" in sets else sorted(sets, key=lambda k: -len(sets[k]))[0]  # expanding window
     table = out["tables"]["lagged"].drop_nulls(fsets[fs])
     test, pred, _ = reg.forward_chaining(table, fsets[fs], sets[label])
     has_official = "official_dem2p" in test.columns and test["official_dem2p"].drop_nulls().len() > 0
@@ -86,7 +86,8 @@ def load(source: str = "simulated", root: Path = Path(".")) -> dict:
     return {"metrics": out["metrics"], "preds": out["preds"], "comparison": out["comparison"],
             "summary": summary, "by_year": reg.summarise_comparison(out["comparison"], by_year=True),
             "baseline_forecast": out["baseline_forecast"], "oos": oos, "source": source,
-            "oos_label": label, "oos_features": fs, "has_official": has_official}  # fmt: skip
+            "oos_label": label, "oos_features": fs, "selection": out["selection"],
+            "selected": out["selected"], "headline_train": out["headline_train"], "has_official": has_official}  # fmt: skip
 
 
 def pick(preds: pl.DataFrame, train: str, features: str | None = None) -> pd.DataFrame:
@@ -250,8 +251,8 @@ def fig_baselines(summary: pl.DataFrame):
 
 def all_figures(res: dict) -> dict:
     return {
-        "forecast_bars": fig_forecast(res["preds"], features=res["oos_features"]),
-        "forecast_map": fig_tilemap(res["preds"], features=res["oos_features"]),
+        "forecast_bars": fig_forecast(res["preds"], res["headline_train"], res["oos_features"]),
+        "forecast_map": fig_tilemap(res["preds"], res["headline_train"], res["oos_features"]),
         "model_comparison": fig_models(res["preds"], features=res["oos_features"]),
         "accuracy_scatter": fig_accuracy(res["oos"], res["has_official"], res["oos_label"]),
         "error_by_model": fig_metrics(res["metrics"]),

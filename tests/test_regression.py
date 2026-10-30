@@ -246,3 +246,21 @@ def test_prior_feature_sets_exist_and_forecast_every_race(tmp_path, monkeypatch)
     # targets never feed the priors: no prior feature equals the same row's certified share
     tbl = out["tables"]["lagged"]
     assert not (tbl["prev_president"] == tbl["official_dem2p"]).any()
+
+
+def test_model_is_selected_on_validation_and_scored_on_untouched_holdout(tmp_path, monkeypatch):
+    out = run_simulated(tmp_path, monkeypatch)
+    sel = out["selection"]
+    years = sorted(out["tables"]["lagged"]["year"].unique().to_list())
+    holdout = str(years[-1])
+    val_years = set(sel.filter(pl.col("phase") == "validation")["test_years"].str.split(",").explode())
+    assert holdout not in val_years  # the holdout never enters validation
+    assert set(sel.filter(pl.col("phase") == "holdout")["test_years"]) == {holdout}
+    chosen = sel.filter(pl.col("selected"), pl.col("phase") == "validation")
+    assert chosen.height == 1
+    val = sel.filter(pl.col("phase") == "validation")
+    assert chosen["official_mae_dem2p"][0] == val["official_mae_dem2p"].min()  # lowest validation error
+    fs, window = out["selected"]
+    assert fs in out["feature_sets"] and window in reg.WINDOWS
+    assert out["headline_train"] in set(out["preds"]["train"])
+    assert out["headline_train"] in out["sets"]

@@ -44,6 +44,9 @@
 # Feature sets: ces (survey profile), ces+acs, prior (previous presidential and Senate
 #   results only), ces+prior. All lagged; priors come from strictly earlier years.
 #
+# Model selection: the headline model (feature set x training window) is chosen by
+#   validation-cycle error and reported on an untouched holdout cycle (select_model).
+#
 # Baselines (simple, no fitting): party-ID majority (pid3, and pid7 with leaners),
 #   last Senate result, last presidential result, majority class, mean share.
 #
@@ -497,6 +500,55 @@ def forecast_baselines(target: pl.DataFrame, table: pl.DataFrame) -> pl.DataFram
     return pl.concat(parts).with_columns(pl.col("dem2p").fill_nan(None)).sort("st", "baseline")
 
 
+#### Model selection ####
+# The headline model is chosen the standard way: by performance on VALIDATION cycles,
+# then reported on a HOLDOUT cycle that played no part in the choice. Candidates are a
+# feature set crossed with a training window (all earlier cycles, the last two, the
+# last one). Selection uses certified Dem two-party error (winner accuracy breaks ties).
+# Validation cycles: every cycle with at least two earlier cycles, except the holdout;
+# holdout: the most recent cycle. The holdout is reported for every candidate for
+# transparency, but never used to choose.
+WINDOWS = {"all": None, "last 2": 2, "last 1": 1}
+
+
+def select_model(table: pl.DataFrame, feature_sets: dict[str, list[str]], min_states: int = 10):
+    """Returns (table of validation/holdout scores, (feature set, window) selected)."""
+    years = sorted(table["year"].unique().to_list())
+    holdout = years[-1]
+    validation = [y for y in years[:-1] if sum(t < y for t in years) >= 2]
+    rows = []
+    for fs_name, features in feature_sets.items():
+        complete = table.drop_nulls(features)
+        for window, k in WINDOWS.items():
+            for phase, test_years in (("validation", validation), ("holdout", [holdout])):
+                held, preds, bases = [], [], []
+                for y in test_years:
+                    earlier = [t for t in years if t < y]
+                    train = complete.filter(pl.col("year").is_in(earlier if k is None else earlier[-k:]))
+                    test = complete.filter(pl.col("year") == y)
+                    if train["st"].n_unique() < min_states or test.height == 0:
+                        continue
+                    held.append(test)
+                    preds.append(fit_predict(train, test, features))
+                    bases.append(mean_shares(train, test.height))
+                if held:
+                    sc = score(pl.concat(held), np.vstack(preds), np.vstack(bases))
+                    rows.append({"features": fs_name, "window": window, "phase": phase,
+                                 "test_years": ",".join(map(str, test_years)), **sc})  # fmt: skip
+    sel = pl.DataFrame(rows)
+    val = sel.filter(pl.col("phase") == "validation", pl.col("official_mae_dem2p").is_not_null())
+    best = val.sort("official_mae_dem2p", pl.col("official_winner_acc"), descending=[False, True]).row(0, named=True)
+    sel = sel.with_columns(selected=(pl.col("features") == best["features"]) & (pl.col("window") == best["window"]))
+    return sel, (best["features"], best["window"])
+
+
+def headline_label(window: str, sets: dict, years: list[int]) -> str:
+    """The training-set label (as used for the 2026 forecast) matching a window."""
+    k = WINDOWS[window]
+    want = years if k is None else years[-k:]
+    return next(label for label, ys in sets.items() if ys == want)
+
+
 def load_script(name: str):
     spec = importlib.util.spec_from_file_location("_s", Path(__file__).parent / name)
     mod = importlib.util.module_from_spec(spec)
@@ -536,11 +588,16 @@ def run(source: str) -> dict:
     preds = forecast(lagged, target, feature_sets, sets)
     comparison = compare_by_year(tables, feature_sets)
     base_forecast = forecast_baselines(target, lagged)
+    selection, (sel_fs, sel_window) = select_model(lagged, feature_sets)
+    selection.write_parquet(p["out"] / "model_selection.parquet")
+    print(f"Selected by validation: features={sel_fs}, window={sel_window}")
     for name, df in [("regression_metrics", metrics), ("regression_forecast_2026", preds),
                      ("baseline_comparison", comparison), ("baseline_forecast_2026", base_forecast)]:  # fmt: skip
         df.write_parquet(p["out"] / f"{name}.parquet")
     return {"metrics": metrics, "preds": preds, "comparison": comparison,
             "baseline_forecast": base_forecast, "tables": tables, "sets": sets,
+            "selection": selection, "selected": (sel_fs, sel_window),
+            "headline_train": headline_label(sel_window, sets, years),
             "feature_sets": feature_sets, "paths": p}  # fmt: skip
 
 

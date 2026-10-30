@@ -28,7 +28,7 @@ res = figs.load(SOURCE, root=Path(".."))
 plots = figs.all_figures(res)
 preds, metrics = res["preds"], res["metrics"]
 metrics_lag = metrics.filter(pl.col("timing") == "lagged")  # the honest design; see the leakage audit
-headline = "2022+2024"
+headline = res["headline_train"]  # chosen by validation (see "How the headline model was chosen")
 fs = res["oos_features"]
 head = figs.pick(preds, headline, fs)
 
@@ -299,6 +299,40 @@ pf = (
     .sort("Trained on", "Features").to_pandas()
 )
 table(pf)
+```
+
+# How the headline model was chosen
+
+The headline forecast is not picked by looking at the final results. It is chosen the standard way: by
+**validation performance**, then reported on a **holdout** cycle that played no part in the choice.
+
+- **Candidates:** four feature sets (`ces`, `ces+acs`, `prior`, `ces+prior`) crossed with three training windows
+  (all earlier cycles, the last two, the last one): 12 models.
+- **Validation:** each candidate predicts 2018, 2020 and 2022, trained only on earlier cycles (forward-chaining).
+  The winner is the candidate with the lowest error in the Democratic two-party share against certified results
+  (winner accuracy breaks ties).
+- **Holdout:** 2024, the most recent cycle, is predicted by every candidate for transparency but never used to choose.
+
+```{python}
+sel = res["selection"]
+sv = sel.filter(pl.col("phase") == "validation").select("features", "window", pl.col("official_mae_dem2p").alias("val_mae"), pl.col("official_winner_acc").alias("val_acc"), "selected")
+sh = sel.filter(pl.col("phase") == "holdout").select("features", "window", pl.col("official_mae_dem2p").alias("hold_mae"), pl.col("official_winner_acc").alias("hold_acc"))
+tab = sv.join(sh, on=["features", "window"]).sort("val_mae").with_columns((100 * pl.col("val_acc")).alias("val_acc"), (100 * pl.col("hold_acc")).alias("hold_acc"))
+tab = tab.select(pl.col("features").alias("Features"), pl.col("window").alias("Training window"), pl.col("val_mae").alias("Validation error (pp)"), pl.col("val_acc").alias("Validation winners (%)"), pl.col("hold_mae").alias("Holdout 2024 error (pp)"), pl.col("hold_acc").alias("Holdout 2024 winners (%)"), pl.col("selected").alias("Chosen")).to_pandas()
+table(tab)
+```
+
+```{python}
+#| output: asis
+fs_sel, win_sel = res["selected"]
+chosen = sel.filter(pl.col("selected"), pl.col("phase") == "holdout").row(0, named=True)
+best_hold = sel.filter(pl.col("phase") == "holdout").sort("official_mae_dem2p").row(0, named=True)
+print(f"""**Chosen:** `{fs_sel}` trained on {win_sel} earlier cycles (the `{headline}` set for 2026). On the untouched 2024 holdout it has an
+error of {chosen['official_mae_dem2p']:.1f} points and calls {100*chosen['official_winner_acc']:.0f}% of winners.
+The holdout's own best candidate was `{best_hold['features']}` ({best_hold['window']}) at {best_hold['official_mae_dem2p']:.1f} points; that is expected,
+because validation picks the best candidate on average, not the best on one cycle. With only three validation
+cycles and about 33 races each, differences of a point or so between candidates are within noise, so averaging
+several good models would be a reasonable next step.""")
 ```
 
 # Method

@@ -1,4 +1,4 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (previous results as features))
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (validation-based model selection))
 =====================================================================
 Goal: forecast every 2026 US Senate race (35 contests) with a state-level
 regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
@@ -52,6 +52,10 @@ Status
    same-cycle information in leave-one-state-out, time-travel schemes, a baseline that
    saw the held-out state, and a 2026 forecast trained on a different feature timing.
    All fixed or labelled; certified results are never used to fit a model.
+ - HEADLINE MODEL IS CHOSEN BY VALIDATION (scripts/05 select_model): 4 feature sets x 3 training
+   windows = 12 candidates; validation cycles 2018, 2020, 2022 (forward-chaining), holdout 2024
+   never used to choose. Real data: chosen = ces+prior, all earlier cycles (validation 4.94 pp,
+   89% winners); holdout 2024: 4.3 pp, 88% winners (29 of 33). 2026 forecast headline uses it.
  - Honest real-data accuracy (lagged features, forward-chaining, 'all' training set):
    Dem two-party MAE 5.9 pp, winners correct 88%. Leaky same-year features gave 5.2 pp.
  - SIMPLE BASELINES on identical state-races (139 races, 2016-2024, vs certified results):

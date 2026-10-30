@@ -47,8 +47,10 @@ LEAKAGE AND BASELINES
     main driver of accuracy.
 
 PREVIOUS-RESULT FEATURES
-21. The headline feature set was fixed before these features existed; choosing 'ces+prior'
-    or 'prior' now would select on test performance. Treat their gain as indicative.
+21. The headline model is chosen on 3 validation cycles (about 100 races, strongly correlated
+    within a cycle) and scored on one holdout cycle (33 races); differences of about a point
+    between candidates are within noise. On the 2024 holdout, 'prior' alone happened to beat
+    the chosen model (3.3 vs 4.3 pp); that is the expected cost of selecting on validation.
 22. Where a state had no earlier Senate race the Senate feature falls back to the
     presidential share (flagged). Previous presidential results are 2-4 years old,
     depending on whether the target is a midterm or presidential year.
