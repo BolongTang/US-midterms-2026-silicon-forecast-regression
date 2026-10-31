@@ -20,3 +20,6 @@ Thumbs.db
 
 # Large raw CES download (re-create with scripts/01-download_data.py)
 data/01-raw_data/cumulative_*
+
+# Intermediate query batches (combined into responses_*.parquet)
+data/02-analysis_data/parts_*/

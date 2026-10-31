@@ -162,3 +162,41 @@ def test_2024_answer_key_present():
     df = pl.read_parquet(PERSONAS[2024])
     share_with_vote = df["voted_sen_party"].is_not_null().mean()
     assert share_with_vote > 0.4
+
+
+#### Senate races table ####
+@pytest.fixture(scope="module")
+def races():
+    return pl.read_csv("data/01-raw_data/senate_races.csv")
+
+
+def test_races_cover_the_right_states(races):
+    for year, states in SENATE_STATES.items():
+        assert set(races.filter(pl.col("year") == year)["state"]) == states
+
+
+def test_one_row_per_race(races):
+    assert (
+        not races.select(pl.struct("year", "state").is_duplicated()).to_series().any()
+    )
+
+
+def test_every_race_has_a_republican_and_an_opponent(races):
+    assert races["republican"].is_not_null().all()
+    has_opponent = races["democrat"].is_not_null() | races["independent"].is_not_null()
+    assert has_opponent.all()
+
+
+def test_main_opponent_is_on_the_ballot(races):
+    for row in races.iter_rows(named=True):
+        column = "democrat" if row["main_opponent"] == "Democratic" else "independent"
+        assert row[column], (row["year"], row["state"])
+
+
+def test_every_race_has_a_source(races):
+    assert races["source"].str.starts_with("https://").all()
+
+
+def test_personas_match_races(personas, races):
+    year, df = personas
+    assert set(df["state"]) == set(races.filter(pl.col("year") == year)["state"])

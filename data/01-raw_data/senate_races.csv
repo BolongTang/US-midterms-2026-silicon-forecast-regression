@@ -1,0 +1,69 @@
+year,state,special,incumbent,incumbent_party,open_seat,republican,democrat,independent,main_opponent,source
+2024,AZ,false,Kyrsten Sinema,Independent,true,Kari Lake,Ruben Gallego,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,CA,false,Laphonza Butler,Democratic,true,Steve Garvey,Adam Schiff,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,CT,false,Chris Murphy,Democratic,false,Matthew Corey,Chris Murphy,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,DE,false,Tom Carper,Democratic,true,Eric Hansen,Lisa Blunt Rochester,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,FL,false,Rick Scott,Republican,false,Rick Scott,Debbie Mucarsel-Powell,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,HI,false,Mazie Hirono,Democratic,false,Bob McDermott,Mazie Hirono,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,IN,false,Mike Braun,Republican,true,Jim Banks,Valerie McCray,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,ME,false,Angus King,Independent,false,Demitroula Kouzounas,David Costello,Angus King,Independent,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,MD,false,Ben Cardin,Democratic,true,Larry Hogan,Angela Alsobrooks,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,MA,false,Elizabeth Warren,Democratic,false,John Deaton,Elizabeth Warren,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,MI,false,Debbie Stabenow,Democratic,true,Mike Rogers,Elissa Slotkin,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,MN,false,Amy Klobuchar,Democratic,false,Royce White,Amy Klobuchar,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,MS,false,Roger Wicker,Republican,false,Roger Wicker,Ty Pinkins,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,MO,false,Josh Hawley,Republican,false,Josh Hawley,Lucas Kunce,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,MT,false,Jon Tester,Democratic,false,Tim Sheehy,Jon Tester,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,NE,false,Deb Fischer,Republican,false,Deb Fischer,,Dan Osborn,Independent,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,NV,false,Jacky Rosen,Democratic,false,Sam Brown,Jacky Rosen,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,NJ,false,George Helmy,Democratic,true,Curtis Bashaw,Andy Kim,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,NM,false,Martin Heinrich,Democratic,false,Nella Domenici,Martin Heinrich,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,NY,false,Kirsten Gillibrand,Democratic,false,Mike Sapraicone,Kirsten Gillibrand,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,ND,false,Kevin Cramer,Republican,false,Kevin Cramer,Katrina Christiansen,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,OH,false,Sherrod Brown,Democratic,false,Bernie Moreno,Sherrod Brown,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,PA,false,Bob Casey Jr.,Democratic,false,Dave McCormick,Bob Casey Jr.,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,RI,false,Sheldon Whitehouse,Democratic,false,Patricia Morgan,Sheldon Whitehouse,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,TN,false,Marsha Blackburn,Republican,false,Marsha Blackburn,Gloria Johnson,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,TX,false,Ted Cruz,Republican,false,Ted Cruz,Colin Allred,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,UT,false,Mitt Romney,Republican,true,John Curtis,Caroline Gleich,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,VT,false,Bernie Sanders,Independent,false,Gerald Malloy,,Bernie Sanders,Independent,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,VA,false,Tim Kaine,Democratic,false,Hung Cao,Tim Kaine,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,WA,false,Maria Cantwell,Democratic,false,Raul Garcia,Maria Cantwell,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,WV,false,Joe Manchin,Independent,true,Jim Justice,Glenn Elliott,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,WI,false,Tammy Baldwin,Democratic,false,Eric Hovde,Tammy Baldwin,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2024,WY,false,John Barrasso,Republican,false,John Barrasso,Scott Morrow,,Democratic,https://en.wikipedia.org/wiki/2024_United_States_Senate_elections
+2026,AL,false,Tommy Tuberville,Republican,true,Barry Moore,Everett Wess,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,AK,false,Dan Sullivan,Republican,false,Dan Sullivan,Mary Peltola,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,AR,false,Tom Cotton,Republican,false,Tom Cotton,Hallie Shoffner,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,CO,false,John Hickenlooper,Democratic,false,Mark Baisley,John Hickenlooper,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,DE,false,Chris Coons,Democratic,false,Michael Katz,Chris Coons,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,FL,true,Ashley Moody,Republican,false,Ashley Moody,Angie Nixon,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,GA,false,Jon Ossoff,Democratic,false,Mike Collins,Jon Ossoff,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,ID,false,Jim Risch,Republican,false,Jim Risch,,Todd Achilles,Independent,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,IL,false,Dick Durbin,Democratic,true,Don Tracy,Juliana Stratton,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,IA,false,Joni Ernst,Republican,true,Ashley Hinson,Josh Turek,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,KS,false,Roger Marshall,Republican,false,Roger Marshall,Adam Hamilton,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,KY,false,Mitch McConnell,Republican,true,Andy Barr,Charles Booker,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,LA,false,Bill Cassidy,Republican,true,Julia Letlow,Jamie Davis,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,ME,false,Susan Collins,Republican,false,Susan Collins,Troy Jackson,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,MA,false,Ed Markey,Democratic,false,John Deaton,Ed Markey,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,MI,false,Gary Peters,Democratic,true,Mike Rogers,Abdul El-Sayed,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,MN,false,Tina Smith,Democratic,true,Michele Tafoya,Peggy Flanagan,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,MS,false,Cindy Hyde-Smith,Republican,false,Cindy Hyde-Smith,Scott Colom,Ty Pinkins,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,MT,false,Steve Daines,Republican,true,Kurt Alme,Alani Bankhead,Seth Bodnar,Independent,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,NE,false,Pete Ricketts,Republican,false,Pete Ricketts,,Dan Osborn,Independent,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,NH,false,Jeanne Shaheen,Democratic,true,John E. Sununu,Chris Pappas,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,NJ,false,Cory Booker,Democratic,false,Justin Murphy,Cory Booker,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,NM,false,Ben Ray Lujan,Democratic,false,Larry Marker,Ben Ray Lujan,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,NC,false,Thom Tillis,Republican,true,Michael Whatley,Roy Cooper,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,OH,true,Jon Husted,Republican,false,Jon Husted,Sherrod Brown,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,OK,false,Alan Armstrong,Republican,true,Kevin Hern,N'Kiyla Jasmine Thomas,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,OR,false,Jeff Merkley,Democratic,false,David Brock Smith,Jeff Merkley,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,RI,false,Jack Reed,Democratic,false,Raymond McKay,Jack Reed,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,SC,false,Darline Graham,Republican,false,Darline Graham,Annie Andrews,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,SD,false,Mike Rounds,Republican,false,Mike Rounds,,Brian Bengs,Independent,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,TN,false,Bill Hagerty,Republican,false,Bill Hagerty,Marquita Bradshaw,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,TX,false,John Cornyn,Republican,true,Ken Paxton,James Talarico,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,VA,false,Mark Warner,Democratic,false,Bert Mizusawa,Mark Warner,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,WV,false,Shelley Moore Capito,Republican,false,Shelley Moore Capito,Rachel Fetty Anderson,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
+2026,WY,false,Cynthia Lummis,Republican,true,Harriet Hageman,James Byrd,,Democratic,https://en.wikipedia.org/wiki/2026_United_States_Senate_elections
