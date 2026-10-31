@@ -1,12 +1,23 @@
-USER TODO  (kept up to date by Claude; last updated 2026-10-30)
+USER TODO  (kept up to date by Claude; last updated 2026-10-31)
 =====================================================================
 [DECIDE] = needs your choice.   [DO] = needs your action.
 
 OPEN
+[DECIDE] Page title and authors: only "Yi Zhi Zhang" is listed (taken from the script headers). Add co-authors?
+
+[DECIDE] Assumptions inherited from scripts/04-forecast.py (written by a teammate) that the page flags:
+      (a) 31 Republican seats are not up in 2026 (the script says "check before publishing");
+      (b) the national swing standard deviation of 3 points is a judgement, not measured;
+      (c) DeepSeek V4 Flash has no 2024 backtest, so it is shown but not in the headline.
+      Please confirm (a) and (b), or tell Claude the correct values.
+
+[DO]  The silicon prompts describe candidates by party only (names_in_prompt = False), so the favoured
+      candidate named on the cards and map is the nominee of the favoured side. If you re-query with names,
+      push the new files and Claude will update the page.
+
 [DECIDE] Open a pull request from Regression into main on BolongTang/US-midterms-2026-silicon-forecast-regression?
-      PRs #1 and #2 are merged; the newest work (leakage audit, baselines, previous-result features,
-      validation-based selection, midterm-only and direct models, candidate names, race cards, winner
-      map) is on the Regression branch only. Claude will not open one unless you say so.
+      PRs #1, #2 and #3 are merged; the newest work (the silicon-sampling section and the single-page
+      restructure) is on the Regression branch only. Claude will not open one unless you say so.
 
 [DECIDE] Idaho, Nebraska and South Dakota have no Democratic nominee (independents Achilles, Osborn and
       Bengs are the main challengers). The cards say "No Democratic nominee". Keep, or show the
@@ -21,9 +32,6 @@ OPEN
 
 [DECIDE] Midterm swing for 2026: the model learns a midterm effect only from midterm cycles (2014, 2018,
       2022). Add a manual adjustment (for example plus/minus X points toward the out-party)? Default: none.
-
-[DECIDE] paper/index.qmd (the LLM-forecast page) is still the course template with placeholders (TITLE,
-      AUTHOR 1...). Whose section is it, and should Claude fill it?
 
 [DO]  Run `uv lock` locally and commit uv.lock (scikit-learn and Pillow-dependent plotting were added;
       uv sync was too slow in Claude's sandbox).
@@ -40,6 +48,9 @@ OPEN
       write access there.
 
 DONE (your decisions and requests, newest first)
+ - Silicon-sampling section built from the real LLM results you pushed (no LLM re-queried). The site is now ONE
+   page: silicon sampling first, then the regression forecast, in the same style. Regression results unchanged.
+   The separate regression page and the navbar were removed (content now in paper/_regression.qmd).
  - Osborn stays "other"; Undecided is not split from third parties.
  - Direct two-party model built (ridge on the logit of the certified Dem two-party share).
  - Website: a red-blue bar card per race, three per line, with nominee names, incumbency, percentages

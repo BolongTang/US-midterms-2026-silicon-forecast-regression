@@ -3,16 +3,9 @@ project:
   output-dir: ../docs
   render:
     - index.qmd
-    - regression.qmd
 
 website:
   title: "Senate 2026 forecast"
-  navbar:
-    left:
-      - href: index.qmd
-        text: "LLM forecast"
-      - href: regression.qmd
-        text: "Regression forecast"
   page-footer:
     center: "Yi Zhi Zhang · [Code and data on GitHub](https://github.com/BolongTang/US-midterms-2026-silicon-forecast-regression)"
 
@@ -20,6 +13,7 @@ format:
   html:
     theme: styles.scss
     toc: true
+    toc-depth: 2
 
 execute:
   echo: false

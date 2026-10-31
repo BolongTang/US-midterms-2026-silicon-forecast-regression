@@ -650,11 +650,12 @@ def load_script(name: str):
     return mod
 
 
-def run(source: str) -> dict:
+def run(source: str, write: bool = True) -> dict:
     p = paths(source)
     if source == "simulated" and not p["ces"][0].exists():
         load_script("00b-simulate_regression_inputs.py").simulate(p["out"])
-    p["out"].mkdir(parents=True, exist_ok=True)
+    if write:
+        p["out"].mkdir(parents=True, exist_ok=True)
     ces = pl.concat([pl.read_parquet(f) for f in p["ces"] if f.exists()], how="diagonal_relaxed")
     acs = load_acs(p["acs"])
     official = load_official(p["results"])
@@ -684,16 +685,20 @@ def run(source: str) -> dict:
     base_forecast = forecast_baselines(target, lagged)
     direct_metrics = evaluate_direct(tables, feature_sets, sets)
     direct_preds = forecast_direct(lagged, target, feature_sets, sets)
-    direct_metrics.write_parquet(p["out"] / "direct_metrics.parquet")
-    direct_preds.write_parquet(p["out"] / "direct_forecast_2026.parquet")
+    if write:
+        direct_metrics.write_parquet(p["out"] / "direct_metrics.parquet")
+        direct_preds.write_parquet(p["out"] / "direct_forecast_2026.parquet")
     midterm = compare_midterm(lagged, feature_sets)
-    midterm.write_parquet(p["out"] / "midterm_comparison.parquet")
+    if write:
+        midterm.write_parquet(p["out"] / "midterm_comparison.parquet")
     selection, (sel_fs, sel_window) = select_model(lagged, feature_sets)
-    selection.write_parquet(p["out"] / "model_selection.parquet")
+    if write:
+        selection.write_parquet(p["out"] / "model_selection.parquet")
     print(f"Selected by validation: features={sel_fs}, window={sel_window}")
     for name, df in [("regression_metrics", metrics), ("regression_forecast_2026", preds),
                      ("baseline_comparison", comparison), ("baseline_forecast_2026", base_forecast)]:  # fmt: skip
-        df.write_parquet(p["out"] / f"{name}.parquet")
+        if write:
+            df.write_parquet(p["out"] / f"{name}.parquet")
     return {"metrics": metrics, "preds": preds, "comparison": comparison,
             "baseline_forecast": base_forecast, "tables": tables, "sets": sets,
             "selection": selection, "selected": (sel_fs, sel_window), "midterm": midterm,

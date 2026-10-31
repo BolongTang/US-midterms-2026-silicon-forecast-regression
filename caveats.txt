@@ -70,6 +70,18 @@ MIDTERM-ONLY MODELS AND HEADLINE
 25. The headline feature set (ces+acs) beat ces+prior on validation by 0.05 pp: a tie. The
     choice among feature sets is not statistically meaningful; averaging models would be safer.
 
+SILICON SAMPLING
+31. Personas are 2024 CES respondents, so the synthetic electorate describes 2024, not 2026 voters.
+32. The calibration line comes from one election (33 races in 2024); a midterm may behave differently.
+33. Assumed, not measured: the 3-point national swing, and 31 Republican seats not up (unverified in the
+    teammate's script). The control probability depends on both.
+34. Prompts name parties, not candidates; the model cannot know the nominees. Independents are the hardest
+    group (about two thirds agreement with the real vote in 2024), and four races have an independent challenger.
+35. DeepSeek V4 Flash has a later knowledge cutoff and no backtest; it is shown but excluded from the headline.
+    Its first run was unusable (33% valid answers) and was replaced by a no-reasoning rerun.
+36. A party-line baseline beats the models person by person in 2024 (95% vs 91%); the models' value is for
+    independents and for state-level calibration, not for partisans.
+
 WEBSITE / CANDIDATES
 26. Nominee names, incumbency and party come from Wikipedia race infoboxes at download time (CC BY-SA),
     citing state election offices; they can change before election day. A few replacements are

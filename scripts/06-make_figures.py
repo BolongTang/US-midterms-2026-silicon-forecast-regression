@@ -62,11 +62,11 @@ def load_regression_module():
 
 
 #### Data ####
-def load(source: str = "simulated", root: Path = Path(".")) -> dict:
+def load(source: str = "simulated", root: Path = Path("."), write: bool = True) -> dict:
     """Run the regression and collect everything the figures need."""
     reg = load_regression_module()
     reg.ROOT = Path(root)
-    out = reg.run(source)
+    out = reg.run(source, write=write)  # write=False: re-use the model without touching the saved result files
 
     # Out-of-sample predictions: forward-chaining on lagged features, widest training set
     sets, fsets = out["sets"], out["feature_sets"]

@@ -140,18 +140,19 @@ def cards_html(races: list[dict], photo_dir: Path = ROOT / "data" / "01-raw_data
     out = [CSS, '<div class="race-grid">']
     for r in races:
         d_win = r["winner_party"] == "Democratic"
-        dem_html = person_html(r["dem"], "Democratic", d_win, photo_dir, "Democratic")
+        dem_html = person_html(r["dem"], "Democratic", d_win, photo_dir, r.get("opp_label", "Democratic"))
         rep_html = person_html(r["rep"], "Republican", not d_win, photo_dir, "Republican")
         d, rr = 100 * r["dem2p"], 100 * (1 - r["dem2p"])
         other = f" · independent: {html.escape(', '.join(r['others'][:2]))}" if r["others"] and (r["dem"] is None or r["rep"] is None) else ""
         out.append(
             f'<div class="race-card" aria-label="{html.escape(r["state"])} Senate race">'
-            f'<h4>{html.escape(r["state"])}<small>Predicted winner: {html.escape(r["winner_name"])} ({"D" if d_win else "R"})</small></h4>'
+            f'<h4>{html.escape(r["state"])}<small>Predicted winner: {html.escape(r["winner_name"])} ({r.get("tag") or ("D" if d_win else "R")})</small></h4>'
             f'<div class="people">{dem_html}{rep_html}</div>'
             f'<div class="bar" role="img" aria-label="Democratic {d:.1f} percent, Republican {rr:.1f} percent of the two-party vote">'
-            f'<span class="d" style="width:{d:.2f}%">D {d:.1f}%</span><span class="gap"></span><span class="r" style="width:{rr:.2f}%">R {rr:.1f}%</span></div>'
-            f'<div class="meta"><span>Including undecided/other: D {100*r["p_dem"]:.0f}% · R {100*r["p_rep"]:.0f}% · U {100*r["p_und"]:.0f}%</span></div>'
-            + (f'<div class="meta"><span>{other[3:]}</span></div>' if other else "")
+            f'<span class="d" style="width:{d:.2f}%">{r.get("bar_left", "D")} {d:.1f}%</span><span class="gap"></span><span class="r" style="width:{rr:.2f}%">R {rr:.1f}%</span></div>'
+            + ("".join(f'<div class="meta"><span>{html.escape(m)}</span></div>' for m in r["meta"]) if r.get("meta") else
+               f'<div class="meta"><span>Including undecided/other: D {100*r["p_dem"]:.0f}% · R {100*r["p_rep"]:.0f}% · U {100*r["p_und"]:.0f}%</span></div>')
+            + (f'<div class="meta"><span>{other[3:]}</span></div>' if other and not r.get("meta") else "")
             + "</div>"
         )
     out.append("</div>")
@@ -219,7 +220,8 @@ def centroid(ring: np.ndarray) -> np.ndarray:
     return np.array([((x + x2) * cross).sum(), ((y + y2) * cross).sum()]) / (6 * a)
 
 
-def winner_map(races: list[dict], geo: dict | None = None):
+def winner_map(races: list[dict], geo: dict | None = None, title: str = "2026 U.S. Senate: predicted winner in each state",
+               legend: tuple = ("Predicted Democratic win", "Predicted Republican win", "No Senate race in 2026")):
     """Matplotlib figure: red Republican win, blue Democratic win, grey no race; winner's name in each state."""
     import matplotlib
 
@@ -257,10 +259,10 @@ def winner_map(races: list[dict], geo: dict | None = None):
     ax.set_ylim(y0 - 0.03 * h, y1 + 0.10 * h)
     ax.set_aspect("equal")
     ax.axis("off")
-    for i, (txt, col) in enumerate([("Predicted Democratic win", BLUE), ("Predicted Republican win", RED), ("No Senate race in 2026", GREY)]):
+    for i, (txt, col) in enumerate(zip(legend, [BLUE, RED, GREY])):
         ax.add_patch(plt.Rectangle((x0 + (0.02 + 0.27 * i) * w, y1 + 0.045 * h), 0.022 * w, 0.03 * h, facecolor=col, edgecolor="none"))
         ax.text(x0 + (0.048 + 0.27 * i) * w, y1 + 0.06 * h, txt, va="center", fontsize=10.5, color=INK)
-    ax.set_title("2026 U.S. Senate: predicted winner in each state", loc="left", fontsize=13, fontweight="bold", color=INK, pad=6)
+    ax.set_title(title, loc="left", fontsize=13, fontweight="bold", color=INK, pad=6)
     fig.tight_layout()
     return fig
 
@@ -283,7 +285,7 @@ if __name__ == "__main__":
     figs_spec = __import__("importlib.util").util.spec_from_file_location("figs", HERE / "06-make_figures.py")
     figs = __import__("importlib.util").util.module_from_spec(figs_spec)
     figs_spec.loader.exec_module(figs)
-    res = figs.load(args.source, ROOT)
+    res = figs.load(args.source, ROOT, write=False)
     head = res["preds"].filter(pl.col("train") == res["headline_train"], pl.col("features") == res["oos_features"])
     races = build_races(head, load_candidates())
     out = ROOT / "paper" / "figures"
