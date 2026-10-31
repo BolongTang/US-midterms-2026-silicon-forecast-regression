@@ -1,8 +1,24 @@
-USER TODO  (kept up to date by Claude; last updated 2026-10-30)
+USER TODO  (kept up to date by Claude; last updated 2026-10-31)
 =====================================================================
 [DECIDE] = needs your choice.   [DO] = needs your action.
 
 OPEN
+[DO]  SILICON-SAMPLING SECTION IS WAITING ON THE REAL LLM RESULTS (your choice: "I'll push the real files").
+      I could not find any LLM response file in either repo (BolongTang or harryyz), on any branch or PR,
+      or on disk: data/02-analysis_data holds only personas_2024/2026.parquet plus the regression outputs,
+      and scripts/04-forecast.py is an empty stub. The only LLM-style data is the synthetic placeholder
+      in data/00-simulated_data (not real).
+      Please commit the real files to data/02-analysis_data (any branch; tell me which). scripts/03-query_models.py
+      writes responses_<year>_<timestamp>.parquet with one row per persona x model x repeat, including
+      model, raw_reply, answer, tokens and cost_usd. Include every run you want shown (for example the 2026
+      and the 2024 backtest runs). I will not re-query the LLMs.
+      Then I will: add a new top section on silicon sampling modelled on the Synthetic Voter Project
+      (headline estimate, state-by-state forecasts weighted by the persona weights, cross-tabs, model
+      comparison, validation against the 2024 answer key, API costs, discussion), and move the
+      regression results below it without changing them.
+      Also useful: whether the LLM answers use the "Republican/Democrat/Other/Would not vote" options
+      that scripts/03-query_models.py parses.
+
 [DECIDE] Open a pull request from Regression into main on BolongTang/US-midterms-2026-silicon-forecast-regression?
       PRs #1 and #2 are merged; the newest work (leakage audit, baselines, previous-result features,
       validation-based selection, midterm-only and direct models, candidate names, race cards, winner
