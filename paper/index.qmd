@@ -1,30 +1,322 @@
 ---
-title: "TITLE"
-subtitle: "Forecasts built from synthetic (LLM-generated) survey responses"
-author:
-  - AUTHOR 1
-  - AUTHOR 2
-  - AUTHOR 3
+title: "2026 U.S. Senate elections"
+subtitle: "Forecasts from synthetic (LLM) voters first, and from state-level regression second"
+author: Yi Zhi Zhang
 date: today
 date-format: long
 bibliography: references.bib
 jupyter: python3
 ---
 
-# Forecast
+```{python}
+#| label: silicon-setup
+#| output: false
+import importlib.util
+from pathlib import Path
+import numpy as np
+import pandas as pd
+import polars as pl
+from IPython.display import HTML, Markdown, display
 
-# Methods
+spec_si = importlib.util.spec_from_file_location("si", Path("..") / "scripts" / "08-silicon_views.py")
+si = importlib.util.module_from_spec(spec_si)
+spec_si.loader.exec_module(si)
+sd = si.load_silicon(Path(".."))  # stored LLM results only; no model is queried here
+si_summary, si_seats, si_resp = sd["summary"], sd["seats"], sd["resp"]
+si_races = si.silicon_races(si_summary, sd["races"], sd["cands"])
+si_ctrl = si.control_stats(si_seats)
 
-## Personas
 
-## Querying models
+def si_table(df: pd.DataFrame):
+    display(HTML(df.to_html(index=False, border=0, classes="table table-sm", na_rep="–", float_format=lambda v: f"{v:,.1f}")))
+```
 
-## Post-stratification
+# Silicon sampling {#silicon-sampling}
 
-## Costs and timing
+*Silicon sampling* asks large language models to play survey respondents [@argyle2023]. Each synthetic voter is a
+**persona** built from a real respondent of the 2024 Cooperative Election Study (CES): age, gender, race, education,
+income, party identification, ideology and so on. We describe the persona to a model, tell it the 2026 Senate race in
+the persona's state, and ask how the persona will vote. Many personas, several models and five repeats each give a
+synthetic electorate, which is weighted to the real one. Synthetic samples can be biased in ways real polls are not
+[@bisbee2024], so a 2024 backtest against the real results is used to calibrate every forecast below.
 
-# Uncertainty
+This is the project's main approach. The conventional regression forecast follows in the second part of this page.
 
-# Discussion
+```{python}
+#| output: asis
+n_p = sd["personas"].height
+print(f"""::: {{.callout-note}}
+## Real LLM results
+Everything in this part comes from stored model replies ({n_p:,} personas in 35 states, three models) collected on
+30 to 31 October 2026 and processed by `scripts/04-forecast.py`; this page re-reads the saved files and queries no model.
+:::""")
+```
 
-# References
+## At a glance {#si-glance}
+
+```{python}
+display(HTML(si.glance_html(si_summary, si_seats)))
+```
+
+```{python}
+#| output: asis
+rep_fav = si_summary.filter(pl.col("p_rep_win") >= 0.5).height
+print(f"""The forecast is the share of the vote a **Republican** receives against the main opposition (a Democrat, or an
+independent in Idaho, Montana, Nebraska and South Dakota), taken from 10,000 simulated elections. Republicans are favoured in
+{rep_fav} of the 35 races and keep control of the Senate in {100 * si_ctrl['p_rep_control']:.0f}% of simulations.
+The shaded cards and the map below name the candidate of the favoured side.""")
+```
+
+## Race cards: who is favoured {#si-cards}
+
+One card per race. The bar shows the median forecast share for the opposition (blue) and the Republican (red); the
+favoured candidate's portrait is larger. Official portraits exist only for people who serve or have served in Congress;
+other nominees show initials. The synthetic voters were told only each candidate's *party*, never a name.
+
+```{python}
+display(HTML(si.views.cards_html(si_races)))
+```
+
+## Map of favoured candidates {#si-map}
+
+```{python}
+display(HTML(si.views.figure_html(
+    si.views.winner_map(si_races, title="2026 U.S. Senate: favoured candidate in each state, silicon sampling",
+                        legend=("Opposition favoured", "Republican favoured", "No Senate race in 2026")),
+    "Map of the United States. States with a 2026 Senate race are red where a Republican is favoured and blue where the opposition is, each labelled with the favoured candidate's surname; states with no race are grey.")))
+```
+
+Blue marks the main opposition: the Democrat everywhere except Idaho, Montana, Nebraska and South Dakota, where an independent
+is the challenger.
+
+## Control of the Senate {#si-control}
+
+```{python}
+#| fig-cap: "Distribution of Republican seats after the 2026 election across 10,000 simulated elections."
+#| fig-alt: "Bar chart of the share of simulations for each number of Republican seats, with bars at 50 seats or more in red and below 50 in blue."
+si.fig_seats(si_seats)
+```
+
+```{python}
+#| output: asis
+rows = " ".join(f"{k}+: {100 * float((si_seats['rep_seats'] >= k).mean()):.0f}%" for k in (48, 50, 51, 52, 53, 55))
+print(f"""Probability of at least *k* Republican seats: {rows}. The simulation adds the races won to **{si.SEATS_NOT_UP_REP}**
+Republican seats not up for election, an assumption inherited from `scripts/04-forecast.py` that should be checked
+before relying on the control probability. A 50-50 split goes to Republicans because the Vice President breaks ties.""")
+```
+
+## State-by-state uncertainty {#si-states}
+
+```{python}
+#| fig-cap: "Forecast Republican share of the two-candidate vote in each state, with 80% intervals."
+#| fig-alt: "Dot and interval chart: for every race a dot at the median Republican share and a bar for the 80 percent interval, red where a Republican is favoured and blue otherwise, with a dashed line at 50 percent."
+si.fig_intervals(si_summary)
+```
+
+```{python}
+t = si_summary.sort("state").select(
+    pl.col("state").alias("State"), (100 * pl.col("median")).alias("Median R share (%)"),
+    (100 * pl.col("lower_80")).alias("80% low"), (100 * pl.col("upper_80")).alias("80% high"),
+    (100 * pl.col("p_rep_win")).alias("P(Republican wins) %")).to_pandas()
+t.insert(1, "Favoured", [r["winner_name"] + (" (R)" if r["tag"] == "R" else f" ({r['tag']})") for r in si_races])
+si_table(t)
+```
+
+## Do the models agree? {#si-models}
+
+```{python}
+#| fig-cap: "Raw Republican share by state from each model's synthetic voters."
+#| fig-alt: "Dot plot with one row per state and one marker per model, showing the three models' raw Republican shares close together."
+si.fig_models26(si_summary)
+```
+
+The three models land close together. Only GPT-4o mini and Llama 3.3 70B were backtested on 2024 (their knowledge ends before
+that election), so only they feed the headline; DeepSeek V4 Flash has no backtest and is shown for comparison.
+
+## How the forecast is built {#si-method}
+
+### Personas
+
+```{python}
+#| fig-cap: "Composition of the 2026 persona sample."
+#| fig-alt: "Bar charts of the share of personas by party identification, race, gender, age and education."
+si.fig_composition(sd["personas"])
+```
+
+Personas are real 2024 CES respondents (`scripts/02-build_personas.py`), at most 150 per state, written up in the first person. The
+sample is built from 2024 respondents even for 2026, so it describes the 2024 electorate, not 2026 voters.
+
+### Asking the models
+
+```{python}
+#| output: asis
+qspec = importlib.util.spec_from_file_location("q03", Path("..") / "scripts" / "03-query_models.py")
+q03 = importlib.util.module_from_spec(qspec)
+qspec.loader.exec_module(q03)
+ex = sd["personas"].filter(pl.col("state") == "TX").row(0, named=True)
+race = sd["races"].filter(pl.col("state") == "TX").row(0, named=True)
+print("Each reply is one call to a model with this system prompt and persona-plus-question prompt (an illustration; no model is called here):\n")
+print("```text\n" + q03.SYSTEM_PROMPT + "\n\n" + q03.build_prompt(ex["backstory"], race, 2026) + "\n```")
+```
+
+The wording follows @bisbee2024: answer as the person, using only what they would know. Every persona is asked five times per model at
+temperature 1.0, so a persona's answer is a distribution, not a single vote. **Pure independents** mostly answer "Other", so they
+are asked a second, forced-choice question that allows only the Republican or the main opponent, as in survey follow-ups for
+undecided voters.
+
+### From answers to votes
+
+1. **Persona share.** For each persona and model, the Republican share is Republican answers divided by answers for any major
+   candidate actually on the ballot (Republican, Democrat or independent). Pure independents use their forced-choice answers.
+2. **Weights.** Each persona counts as its CES survey weight times its chance of voting: validated turnout for 2024, and turnout
+   rates by age group, college and news interest estimated from CES 2022 for the 2026 midterm.
+3. **State estimate.** The weighted mean of persona shares, with a bootstrap standard error.
+
+### Calibration and uncertainty
+
+```{python}
+#| output: asis
+c = sd["calib"].to_pandas()
+lines = "; ".join(f"{r.model}: actual = {r.intercept:.2f} + {r.slope:.2f} × estimate" for r in c.itertuples())
+loo = []
+for m in si.BACKTESTED:
+    d = sd["bt"].filter(pl.col("model") == m)
+    x, y = d["rep_share"].to_numpy(), d["actual"].to_numpy()
+    for i in range(len(x)):
+        k = np.arange(len(x)) != i
+        b, a = np.polyfit(x[k], y[k], 1)
+        loo.append(y[i] - (a + b * x[i]))
+sd_state = float(np.std(loo, ddof=1))
+print(f"""Raw synthetic shares are not forecasts. For each backtested model a line is fitted to the 33 races of 2024 ({lines}),
+which pulls the estimates toward the middle and shifts them toward Republicans. The 2026 estimates are passed through that line.
+Uncertainty then comes from five sources in 10,000 simulated elections: a **national** swing shared by all states (standard
+deviation 3 points, an *assumption*, because one election cannot measure it), a **state-level** error (standard deviation
+{100 * sd_state:.1f} points, measured by leaving each 2024 race out in turn), the **model** used, and **sampling** error in the
+synthetic voters.""")
+```
+
+## What the models answer {#si-answers}
+
+```{python}
+#| fig-cap: "Shares of each reply to the 2026 vote question, by model, for the free-choice and forced-choice questions."
+#| fig-alt: "Stacked bars of the share of Democrat, Republican, Independent, Other, Would not vote and unusable replies, for each of three models under free choice and under forced choice."
+si.fig_answers(si_resp)
+```
+
+```{python}
+q = si.run_quality(si_resp).to_pandas()
+q["valid"] = 100 * q["valid"]
+q.columns = ["Run", "Model", "Replies", "Valid answers (%)"]
+si_table(q)
+```
+
+DeepSeek V4 Flash's first 2026 run produced a usable answer only a third of the time, because its internal reasoning used up the token limit. It was re-run with reasoning
+turned off, and the re-run replaces the first run everywhere in the forecast.
+
+## Cross-tabs {#si-crosstabs}
+
+Weighted share of **Republican** answers among Republican, Democrat and independent answers, from the free-choice 2026 replies.
+
+```{python}
+#| output: asis
+for by, title in [("pid7", "Party identification"), ("race", "Race"), ("age_group", "Age"), ("educ", "Education")]:
+    ct = si.crosstab(si_resp, sd["personas"], by)
+    ct.columns = [title] + list(ct.columns[1:])
+    for c in ct.columns[1:]:
+        ct[c] = (100 * ct[c]).round(1)
+    display(HTML(ct.to_html(index=False, border=0, classes="table table-sm", na_rep="–", float_format=lambda v: f"{v:.1f}")))
+```
+
+The synthetic voters follow party identification almost perfectly: strong and leaning partisans vote their party in nearly every reply. The
+answers that move the forecast come from independents, whose Republican share is between 40% and 55% depending on the model.
+
+## Internal validation: the 2024 backtest {#si-validation}
+
+The same pipeline was run on 2024, when the answer is known: 4,833 personas in the 33 states with a Senate race.
+
+```{python}
+#| fig-cap: "Share of synthetic voters who pick the same side (Republican or opposition) as the real respondent reported in 2024."
+#| fig-alt: "Horizontal bars: both models agree with the real vote for about 91 percent of respondents, close to a party-line baseline at about 95 percent."
+si.fig_agreement(sd["ind"])
+```
+
+```{python}
+#| fig-cap: "Agreement with the real 2024 vote by party identification."
+#| fig-alt: "Dot plot by party identification of the agreement of each model and a party-line baseline with the real vote; agreement is lowest for independents."
+si.fig_by_party(sd["by_party"])
+```
+
+```{python}
+#| fig-cap: "2024 backtest at the state level: synthetic Republican share against the actual result."
+#| fig-alt: "Two scatter plots, one per model, of actual Republican share against the model's share for 33 races, with a dashed perfect line and a solid calibration line."
+si.fig_backtest(sd["bt"], sd["calib"])
+```
+
+```{python}
+si_table(si.backtest_summary(sd["bt"]))
+```
+
+```{python}
+#| output: asis
+ind = sd["ind"].to_pandas().set_index("model")["agreement"]
+llm = ind["openai/gpt-4o-mini"]
+base = ind["party-line baseline"]
+print(f"""**Reading.** Person by person, the synthetic voters agree with the real vote {100 * llm:.0f}% of the time, slightly *below* a
+party-line baseline that simply has everyone vote with their side ({100 * base:.0f}%); that baseline cannot predict independents, who are
+where the models help and where they are weakest. At the state level the raw estimates are too Democratic (the bias column) and too
+spread out (calibration slopes near 0.6), which is why calibration is needed. After it, the models still miss by about six points
+on average and call 28 of 33 winners.""")
+```
+
+## Models and costs {#si-costs}
+
+```{python}
+si_table(si.cost_table(si_resp).drop(columns="cost_usd_total"))
+```
+
+```{python}
+si_table(si.cost_by_model(si_resp))
+```
+
+```{python}
+#| output: asis
+print(f"The whole study, including the failed DeepSeek run, cost about ${si.cost_table(si_resp).iloc[-1]['cost_usd_total']:.2f} in API charges.")
+```
+
+## Do silicon sampling and regression agree? {#si-vs-regression}
+
+```{python}
+cmp = si.compare_with_regression(si_summary, Path(".."))
+agree = int((cmp["silicon_rep"] == cmp["regression_rep"]).sum())
+dis = cmp[cmp["silicon_rep"] != cmp["regression_rep"]].copy()
+dis["Silicon sampling"] = np.where(dis["silicon_rep"], "Republican", "Opposition")
+dis["Regression"] = np.where(dis["regression_rep"], "Republican", "Democratic")
+dis["P(Republican wins), silicon (%)"] = 100 * dis["p_rep_win"]
+dis["Regression: Democratic two-party share (%)"] = 100 * dis["reg_dem2p"]
+display(Markdown(f"The two approaches name the same winner in **{agree} of {len(cmp)}** races. They differ in:"))
+si_table(dis[["state", "Silicon sampling", "Regression", "P(Republican wins), silicon (%)", "Regression: Democratic two-party share (%)"]].rename(columns={"state": "State"}))
+```
+
+Silicon sampling is calibrated on a single election (2024), while the regression is validated against certified results from six cycles; the second part of this page documents the regression and its accuracy.
+
+## Discussion and caveats {#si-discussion}
+
+- **Synthetic is not a poll.** The "voters" are 2024 respondents described to a model; no one answered a 2026 survey.
+- **Calibration rests on one election.** The line that corrects the models is fitted to 33 races in 2024, and a midterm may differ.
+- **Some uncertainty is assumed, not measured.** The 3-point national swing is a judgement, and the seats-not-up count is taken from the forecast script.
+- **Candidates are described by party, not name.** The model cannot know who the nominees are, so the favoured candidate is the nominee of the favoured side.
+- **Independents are the hard part.** Models agree with real independents about two thirds of the time in 2024, and four races have an independent challenger.
+- **Models differ in knowledge.** The backtested models have older knowledge cutoffs than DeepSeek V4 Flash, which has no backtest.
+
+# Regression forecast: the second approach {#regression-forecast}
+
+A conventional alternative uses no language model. It regresses each state's past Senate vote on its demographics and partisanship,
+using certified results from 2014 to 2024, and predicts 2026 from the 2024 profiles. The rest of this page documents that approach; its
+results are unchanged from the earlier version of this site.
+
+{{< include _regression.qmd >}}
+
+# References {.unnumbered}
+
+::: {#refs}
+:::

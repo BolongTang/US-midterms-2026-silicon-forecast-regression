@@ -1,9 +1,22 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (direct model, candidate names, race cards and winner map))
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-31 (silicon-sampling section; single-page site))
 =====================================================================
-Goal: forecast every 2026 US Senate race (35 contests) with a state-level
-regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
+Goal: forecast every 2026 US Senate race (35 contests). The project's focus is the LLM "silicon sampling"
+forecast (shown first on the site); a state-level regression is the conventional second approach.
 Senate seats are decided by statewide POPULAR vote (no Electoral College), so
 vote share per state is the right target.
+
+SITE: one page (paper/index.qmd). Part 1 = silicon sampling, part 2 = regression (paper/_regression.qmd, included).
+SILICON SAMPLING (from the stored LLM parquet files; scripts/03 queried, scripts/04 forecast; page code scripts/08):
+ - 5,173 personas (real 2024 CES respondents, 35 states), 3 models (GPT-4o mini, Llama 3.3 70B, DeepSeek V4
+   Flash), 5 repeats, temperature 1; forced-choice follow-up for pure independents; candidates described by
+   party only. DeepSeek's first run was 33% valid (reasoning used the token limit); its no-reasoning rerun
+   replaces it. Total API cost about $4.43.
+ - Forecast: Republican share vs main opposition, calibrated on the 2024 backtest (actual = a + b x estimate;
+   slopes 0.62-0.65), 10,000 simulated elections. Republicans keep control in 72% of simulations (median 52
+   seats, 80% interval 47-57); a Republican is favoured in 21 of 35 races; closest: TX, NC, GA.
+ - 2024 backtest: individual agreement 91% (party-line baseline 95%); state MAE 5.7 pp (GPT-4o mini) and
+   6.4 pp (Llama); 28 of 33 winners called by each. Independents are the weak spot (66% agreement).
+ - Silicon sampling and regression name the same winner in 31 of 35 races (differ: FL, GA, MT, NC).
 
 Method (scripts/05-regression.py)
  - Unit of analysis: one row per state per election cycle.
@@ -25,13 +38,14 @@ Files
  scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
  scripts/01-download_data.py                CES 2012-2024 (2012-2020 -> ces_2012_2020.parquet)
   scripts/01e-download_candidates.py         2026 nominees (Wikipedia infoboxes) + official portraits (Bioguide)
+ scripts/08-silicon_views.py            silicon-sampling figures, tables, cards from the stored LLM results
  scripts/07-race_views.py                   race cards (red-blue bar, portraits) and USA winner map
  scripts/01d-download_president.py          certified presidential results 2008-2024 (baseline)
  scripts/01c-download_results.py            certified Senate results 2014-2024 (MIT Election Lab)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
  scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
- paper/regression.qmd                       Quarto page on the regression forecast (SOURCE switch)
+ paper/index.qmd + paper/_regression.qmd    the single Quarto page (silicon first, regression second)
  docs/                                      rendered site (quarto render paper)
  tests/test_regression.py, test_figures.py, test_results.py, test_race_views.py unit + simulated end-to-end + real-data tests
  data/02-analysis_data/regression_*.parquet real-data outputs (CES features only so far)
@@ -48,7 +62,7 @@ Status (real data, CES 2012-2024, ACS, certified Senate + presidential results)
    validation (scripts/05 select_model): validation cycles 2018/2020/2022, holdout 2024 never used
    to choose. Chosen = ces+acs (validation 4.92 pp, 88% winners); on the 2024 holdout 5.6 pp, 88%
    winners. ces+prior was a near-tie (4.97 pp); on the holdout 'prior' alone was best (2.8 pp).
- - LEAKAGE AUDIT (paper/regression.qmd): same-year features, ACS vintage, same-cycle information
+ - LEAKAGE AUDIT (paper/_regression.qmd): same-year features, ACS vintage, same-cycle information
    in leave-one-state-out, time-travel schemes, a baseline that saw the held-out state, and a
    forecast trained on a different feature timing. Fixed or labelled; certified results never fit
    a model. Same-year features flattered error by about 0.5 pp (5.1 vs 5.6 pp, 'ces', all cycles).

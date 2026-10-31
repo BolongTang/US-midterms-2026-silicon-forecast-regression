@@ -1,12 +1,3 @@
----
-title: "2026 Senate: a state-level regression forecast"
-subtitle: "Predicted Democratic, Republican and Undecided shares in all 35 races"
-author: Yi Zhi Zhang
-date: today
-date-format: long
-jupyter: python3
----
-
 ```{python}
 #| label: setup
 #| output: false
@@ -24,7 +15,7 @@ SOURCE = "real"
 spec = importlib.util.spec_from_file_location("figs", Path("..") / "scripts" / "06-make_figures.py")
 figs = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(figs)
-res = figs.load(SOURCE, root=Path(".."))
+res = figs.load(SOURCE, root=Path(".."), write=False)  # the saved regression results are read, never rewritten
 plots = figs.all_figures(res)
 preds, metrics = res["preds"], res["metrics"]
 metrics_lag = metrics.filter(pl.col("timing") == "lagged")  # the honest design; see the leakage audit
@@ -67,7 +58,7 @@ races. Set `SOURCE = "real"` in this page's first code chunk once the real data 
 :::""")
 ```
 
-# Summary
+## Summary
 
 ```{python}
 #| output: asis
@@ -85,7 +76,7 @@ print(f"""- **Coverage:** {n_states} of 35 Senate races have a predicted Democra
   the right quantity to predict; there is no Electoral College.""")
 ```
 
-# Race-by-race forecast
+## Race-by-race forecast
 
 One card per race. The bar shows the predicted Democratic (blue) and Republican (red) share of the two-party
 vote; the predicted winner's portrait is larger. Below the bar, the three-way shares include the undecided.
@@ -100,7 +91,7 @@ else:
     display(Markdown("*Race cards are shown only for real-data runs.*"))
 ```
 
-# Map of predicted winners
+## Map of predicted winners
 
 Blue: a Democrat is predicted to win; red: a Republican; grey: no Senate race in 2026. Each state shows the surname of
 the predicted winner (the nominee of the winning party).
@@ -112,7 +103,7 @@ else:
     display(Markdown("*The map is shown only for real-data runs.*"))
 ```
 
-# More views of the forecast
+## More views of the forecast
 
 ```{python}
 #| fig-cap: "Predicted Democratic, Republican and Undecided shares in every 2026 race."
@@ -120,7 +111,7 @@ else:
 plots["forecast_bars"]
 ```
 
-## Table of predictions
+### Table of predictions
 
 Percentages for every race (model trained on `{python} headline`, features `{python} fs`).
 
@@ -137,7 +128,7 @@ if races is not None:
 table(t)
 ```
 
-# Does the training set matter?
+## Does the training set matter?
 
 The three requested training sets are 2022 only, 2024 only, and both cycles together.
 
@@ -157,7 +148,7 @@ wide.columns = ["State"] + [f"Dem two-party %, trained on {c}" for c in wide.col
 table(wide)
 ```
 
-# Accuracy
+## Accuracy
 
 Two tests are reported, both with features lagged by two years (the 2024 survey predicts 2026, so the 2022
 survey predicts 2024, and so on):
@@ -191,14 +182,14 @@ m = metrics_lag.select(
 table(m)
 ```
 
-# Data
+## Data
 
 - `data/01-raw_data/ces_2014_2020.parquet`, `ces_2022_2024.parquet`: CES respondents (Harvard Dataverse).
 - `data/01-raw_data/acs_state.parquet`: ACS 5-year state demographics (Census API).
 - `data/01-raw_data/senate_results.csv`: certified statewide Senate returns, 2014-2024 (MIT Election Lab).
 - `data/02-analysis_data/regression_*.parquet`: model metrics and the 2026 forecast.
 
-## How independents and special races are coded
+### How independents and special races are coded
 
 - **Independents who caucus with a party** are coded by that party in the certified results: Angus King (Maine) and
   Bernie Sanders (Vermont) count as Democrats. The CES Senate question already places them in its Democratic slot.
@@ -207,7 +198,7 @@ table(m)
   a Republican candidate; a state with two such races in one year (for example Georgia 2020) pools their votes.
   Nebraska 2024's regular race (Fischer v. Osborn) has no Democrat, so only its special race (Ricketts v. Love) counts.
 
-## Regressions on the older cycles (2014, 2016, 2018)
+### Regressions on the older cycles (2014, 2016, 2018)
 
 Each older cycle can be used on its own, or together as `2014+2016+2018`. The table compares them with the
 newer pair (`2022+2024`) and with every cycle together (`all`), all scored against certified results.
@@ -234,7 +225,7 @@ display(Markdown("**2026 predictions: older cycles versus newer cycles versus al
 table(cmp)
 ```
 
-# Leakage audit
+## Leakage audit
 
 A forecast may only use what was known before the election. I checked every step of the pipeline for
 information that would not have been available, and fixed what I found.
@@ -278,7 +269,7 @@ lk = lk.rename(columns={"lagged": "Error, lagged (pp)", "contemporaneous": "Erro
 table(lk)
 ```
 
-# Simple baselines
+## Simple baselines
 
 Before trusting a regression, compare it with predictions that need no fitting at all. Ideas considered:
 
@@ -326,7 +317,7 @@ print(f"""**Reading.** On identical rows the best regression (*{r0['method'].rep
 The regression's distinct value is the full three-way share forecast, including Undecided.""")
 ```
 
-## Previous results as features
+### Previous results as features
 
 The two baselines that did best, the last presidential and last Senate results, are known before the election,
 so they can also be *features*. Two feature sets add them: `prior` (previous results only, no survey) and
@@ -345,7 +336,7 @@ pf = (
 table(pf)
 ```
 
-# How the headline model was chosen
+## How the headline model was chosen
 
 The headline forecast is not picked by looking at the final results. It is chosen the standard way: by
 **validation performance**, then reported on a **holdout** cycle that played no part in the choice.
@@ -380,7 +371,7 @@ cycles and about 33 races each, differences of a point or so between candidates 
 several good models would be a reasonable next step.""")
 ```
 
-# Direct two-party model
+## Direct two-party model
 
 The main model predicts the survey's three-way split and then reads off the two-party share. A second model
 predicts the **certified Democratic share of the two-party vote directly**: a ridge regression on its logit, fit on
@@ -408,7 +399,7 @@ three-way model with survey-only features and about equal once previous results 
 differs from the headline by {gap:.1f} points on average and calls {flips} of {len(cmp)} races differently.""")
 ```
 
-# Midterm-only models
+## Midterm-only models
 
 Midterm electorates differ from presidential-year ones, so a second family of models is fit on **midterm cycles
 only** (2014, 2018, 2022) and used to predict 2026. They are compared with the all-cycle models on the same
@@ -443,7 +434,7 @@ less data, and the presidential-year cycles evidently still help. For 2026 the t
 plots["midterm_vs_all"]
 ```
 
-# Method
+## Method
 
 1. **Unit of analysis:** one row per state per election cycle.
 2. **Features (lagged two years):** survey-weighted state profile (share male, white, Black, Hispanic, college-educated,
@@ -462,7 +453,7 @@ plots["midterm_vs_all"]
 Run the whole pipeline with `uv run scripts/05-regression.py` and rebuild the figures with
 `uv run scripts/06-make_figures.py`.
 
-# Caveats
+## Caveats
 
 - Targets are survey *intent*, not votes; "Undecided" includes Not Sure, No One and third-party answers.
 - State profiles come from survey samples; small states have few respondents.
