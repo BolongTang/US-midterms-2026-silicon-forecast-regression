@@ -66,28 +66,29 @@ def load(source: str = "simulated", root: Path = Path(".")) -> dict:
     """Run the regression and collect everything the figures need."""
     reg = load_regression_module()
     reg.ROOT = Path(root)
-    metrics, preds = reg.run(source)
+    out = reg.run(source)
 
-    # Out-of-sample (leave-one-state-out) predictions for the widest training set
-    p = reg.paths(source)
-    ces = pl.concat([pl.read_parquet(f) for f in p["ces"] if f.exists()], how="diagonal_relaxed")
-    acs, official = reg.load_acs(p["acs"]), reg.load_official(p["results"])
-    table = reg.build_training_table(ces, acs, official)
-    sets = reg.train_sets(sorted(table["year"].unique().to_list()))
-    label = "all" if "all" in sets else "2022+2024"
-    fs = "ces+acs" if acs is not None else "ces"
-    features = reg.CES_FEATURES + (reg.ACS_FEATURES if acs is not None else []) + ["midterm"]
-    train = table.filter(pl.col("year").is_in(sets[label])).drop_nulls(features)
-    pred = reg.leave_one_state_out(train, features)
-    oos = train.select("st", "year", "dem", "rep", *(["official_dem2p"] if official is not None else [])).with_columns(
+    # Out-of-sample predictions: forward-chaining on lagged features, widest training set
+    sets, fsets = out["sets"], out["feature_sets"]
+    fs, _ = out["selected"]  # chosen by validation performance, not by looking at the test
+    label = "all" if "all" in sets else sorted(sets, key=lambda k: -len(sets[k]))[0]  # expanding window
+    table = out["tables"]["lagged"].drop_nulls(fsets[fs])
+    test, pred, _ = reg.forward_chaining(table, fsets[fs], sets[label])
+    has_official = "official_dem2p" in test.columns and test["official_dem2p"].drop_nulls().len() > 0
+    oos = test.select("st", "year", "dem", "rep", *(["official_dem2p"] if has_official else [])).with_columns(
         pred_dem=pl.Series(pred[:, 0]),
         pred_rep=pl.Series(pred[:, 1]),
     ).with_columns(
         pred_dem2p=pl.col("pred_dem") / (pl.col("pred_dem") + pl.col("pred_rep")),
         obs_dem2p=pl.col("dem") / (pl.col("dem") + pl.col("rep")),
     )  # fmt: skip
-    return {"metrics": metrics, "preds": preds, "oos": oos, "source": source,
-            "oos_label": label, "oos_features": fs, "has_official": official is not None}  # fmt: skip
+    summary = reg.summarise_comparison(out["comparison"])
+    return {"metrics": out["metrics"], "preds": out["preds"], "comparison": out["comparison"],
+            "summary": summary, "by_year": reg.summarise_comparison(out["comparison"], by_year=True),
+            "baseline_forecast": out["baseline_forecast"], "oos": oos, "source": source,
+            "oos_label": label, "oos_features": fs, "selection": out["selection"],
+            "selected": out["selected"], "headline_train": out["headline_train"], "midterm": out["midterm"],
+            "direct_metrics": out["direct_metrics"], "direct_preds": out["direct_preds"], "has_official": has_official}  # fmt: skip
 
 
 def pick(preds: pl.DataFrame, train: str, features: str | None = None) -> pd.DataFrame:
@@ -107,7 +108,7 @@ def base_theme(**kw):
         panel_grid_major=element_line(color=GRID, size=0.5),
         panel_grid_minor=element_blank(),
         plot_title=element_text(size=13, weight="bold"),
-        plot_subtitle=element_text(color=INK2),
+        plot_subtitle=element_text(color=INK2, size=9),
         legend_position="top",
         legend_title=element_blank(),
     )
@@ -189,35 +190,96 @@ def fig_accuracy(oos: pl.DataFrame, has_official: bool, label: str):
         + scale_x_continuous(labels=lambda v: [f"{x:.0%}" for x in v])
         + scale_y_continuous(labels=lambda v: [f"{x:.0%}" for x in v])
         + labs(title="Out-of-sample accuracy",
-               subtitle=f"Leave-one-state-out, trained on {label}; each point is one state-race",
+               subtitle=f"Forward-chaining: trained on earlier cycles ({label}), features lagged two years; one point per state-race",
                x=f"Observed Democratic two-party share ({what})", y="Predicted share")
         + base_theme(figure_size=(6, 5.5))
     )  # fmt: skip
 
 
 def fig_metrics(metrics: pl.DataFrame):
-    """Error of the Dem-share prediction against a mean-share baseline."""
-    d = metrics.to_pandas()
+    """Error of the Dem-share prediction against a mean-share baseline (lagged features)."""
+    d = metrics.filter(pl.col("timing") == "lagged").to_pandas()
     d["train"] = pd.Categorical(d["train"], categories=list(dict.fromkeys(d["train"])), ordered=True)
+    d["scheme"] = d["scheme"].str.replace(" (same-cycle info)", "\n(same-cycle info: optimistic)", regex=False)
     return (
         ggplot(d, aes("train"))
         + geom_col(aes(y="mae_dem"), fill=BLUE, width=0.6)
         + geom_point(aes(y="baseline_mae_dem"), color=INK, shape="D", size=2.4)
         + facet_grid("features ~ scheme", scales="free_x")
         + labs(title="Prediction error by training set",
-               subtitle="Bars: model error in Democratic share (points); diamonds: mean-share baseline",
+               subtitle="Bars: model error in Democratic share; diamonds: mean-share baseline\nfrom the same training data",
                x="Training years", y="Mean absolute error (percentage points)")
-        + base_theme(figure_size=(10, 5), axis_text_x=element_text(angle=30, ha="right", color=INK2))
+        + base_theme(figure_size=(8.5, 9), axis_text_x=element_text(angle=30, ha="right", color=INK2))
+    )  # fmt: skip
+
+
+def fig_leakage(metrics: pl.DataFrame):
+    """How much accuracy the leaky design added: lagged vs same-year features."""
+    d = metrics.filter(pl.col("features") == "ces", pl.col("official_mae_dem2p").is_not_null()).to_pandas()
+    d["train"] = pd.Categorical(d["train"], categories=list(dict.fromkeys(d["train"]))[::-1], ordered=True)
+    d["scheme"] = d["scheme"].str.replace(" (same-cycle info)", "\n(same-cycle info)", regex=False)
+    d["timing"] = pd.Categorical(d["timing"], categories=["lagged", "contemporaneous"], ordered=True)
+    return (
+        ggplot(d, aes("official_mae_dem2p", "train", color="timing", shape="timing"))
+        + geom_point(size=2.8, alpha=0.9)
+        + facet_grid(". ~ scheme")
+        + scale_color_manual({"lagged": MODEL_COLOURS["2022"], "contemporaneous": MODEL_COLOURS["2024"]})
+        + scale_shape_manual({"lagged": "o", "contemporaneous": "s"})
+        + labs(title="Does the design leak?",
+               subtitle="Error against certified results. Lagged = features from two years earlier (honest).\nContemporaneous = same-year features, same respondents as the target (leaky).",
+               x="Mean absolute error in Democratic two-party share (pp)", y=None)
+        + base_theme(figure_size=(8, 5.2))
+    )  # fmt: skip
+
+
+def fig_baselines(summary: pl.DataFrame):
+    """Winner accuracy of the ridge model and every simple baseline on identical rows."""
+    d = summary.to_pandas().sort_values("winner_acc")
+    d["kind"] = np.where(d["method"].str.startswith("ridge"), "Regression", "Simple baseline")
+    d["method"] = pd.Categorical(d["method"].str.replace("baseline: ", "", regex=False), categories=d["method"].str.replace("baseline: ", "", regex=False).tolist(), ordered=True)
+    return (
+        ggplot(d, aes("method", "winner_acc", fill="kind"))
+        + geom_col(width=0.7, color="#fcfcfb", size=0.6)
+        + coord_flip()
+        + scale_fill_manual({"Regression": BLUE, "Simple baseline": GREY})
+        + scale_y_continuous(labels=lambda v: [f"{x:.0%}" for x in v], limits=(0, 1), expand=(0, 0.04))
+        + labs(title="Regression versus simple baselines",
+               subtitle="Share of Senate winners called correctly, scored on the same state-races;\npredictions use only information from before each election",
+               x=None, y="Winners correct (certified results)")
+        + base_theme(figure_size=(8, 4.6), axis_title_y=element_blank())
+    )  # fmt: skip
+
+
+def fig_midterm(preds: pl.DataFrame, features: str):
+    """2026 forecast from midterm-only models against the all-cycle model, state by state."""
+    a = pick(preds, "all", features)[["st", "dem2p"]].rename(columns={"dem2p": "all_cycles"})
+    m = pick(preds, "midterms", features)[["st", "dem2p"]].rename(columns={"dem2p": "midterm_only"})
+    d = a.merge(m, on="st")
+    d["gap"] = (d["midterm_only"] - d["all_cycles"]).abs()
+    return (
+        ggplot(d, aes("all_cycles", "midterm_only"))
+        + geom_abline(slope=1, intercept=0, color=GREY, linetype="dashed")
+        + geom_point(color=BLUE, size=2.2, alpha=0.8, stroke=0)
+        + geom_text(aes(label="st"), data=d[d["gap"] > 0.06], size=7, color=INK, nudge_y=0.012)
+        + scale_x_continuous(labels=lambda v: [f"{x:.0%}" for x in v])
+        + scale_y_continuous(labels=lambda v: [f"{x:.0%}" for x in v])
+        + labs(title="2026: midterm-only model versus all-cycle model",
+               subtitle="Predicted Democratic two-party share; midterm-only is fit on 2014, 2018, 2022\nStates labelled where the two differ by more than 6 points",
+               x="All six cycles (headline)", y="Midterm cycles only")
+        + base_theme(figure_size=(6, 5.6))
     )  # fmt: skip
 
 
 def all_figures(res: dict) -> dict:
     return {
-        "forecast_bars": fig_forecast(res["preds"]),
-        "forecast_map": fig_tilemap(res["preds"]),
-        "model_comparison": fig_models(res["preds"]),
+        "forecast_bars": fig_forecast(res["preds"], res["headline_train"], res["oos_features"]),
+        "forecast_map": fig_tilemap(res["preds"], res["headline_train"], res["oos_features"]),
+        "model_comparison": fig_models(res["preds"], features=res["oos_features"]),
         "accuracy_scatter": fig_accuracy(res["oos"], res["has_official"], res["oos_label"]),
         "error_by_model": fig_metrics(res["metrics"]),
+        "leakage_check": fig_leakage(res["metrics"]),
+        "baselines": fig_baselines(res["summary"]),
+        "midterm_vs_all": fig_midterm(res["preds"], res["oos_features"]),
     }
 
 

@@ -1,4 +1,4 @@
-PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (figures + site added))
+PROJECT SUMMARY  (kept up to date by Claude; last updated 2026-10-30 (direct model, candidate names, race cards and winner map))
 =====================================================================
 Goal: forecast every 2026 US Senate race (35 contests) with a state-level
 regression, as a transparent baseline next to the LLM "silicon sampling" forecast.
@@ -7,50 +7,74 @@ vote share per state is the right target.
 
 Method (scripts/05-regression.py)
  - Unit of analysis: one row per state per election cycle.
- - Features: weighted CES state profile (male, white, Black, Hispanic, college,
+ - Features (LAGGED two years: cycle y uses the survey/ACS of y-2): weighted CES state profile (male, white, Black, Hispanic, college,
    mean age, % Republican, % Democrat) + ACS demographics (optional) + midterm flag.
  - Targets: three shares summing to 1: Democratic, Republican, Undecided/other.
  - Model: ridge regression on additive log-ratios (multi-class, stays on the
    simplex), penalty by leave-one-out CV.
  - Three training sets for the 2026 forecast: 2022 only, 2024 only, 2022+2024.
-   Extra sets "midterms" and "all" appear when 2016-2020 data are present.
- - Tests: leave-one-state-out, predict other cycles, leave-one-cycle-out; MAE of
-   each share vs. a mean-share baseline; winner accuracy; and, when
-   data/01-raw_data/senate_results.csv exists, error vs. certified two-party share.
+   Every single cycle (2014 ... 2024) is also a training set, plus 2014+2016+2018,
+   "midterms" (2014, 2018, 2022) and "all" (six cycles) when the data are present.
+ - Tests: forward-chaining (train on earlier cycles, predict the next; the honest
+   forecast test) and leave-one-state-out (optimistic: sees same-cycle states); MAE
+   of each share vs. a fold-wise mean-share baseline; winner accuracy; error vs.
+   certified two-party share. Same-year-feature tables are kept only to show the leak.
  - 2026 features carry forward the 2024 CES (and ACS).
 
 Files
  scripts/00b-simulate_regression_inputs.py  fake CES/ACS/results with known structure
- scripts/01-download_data.py                CES 2016-2024 (2016-2020 -> ces_2016_2020.parquet)
-  scripts/01c-download_results.py            certified Senate results 2016-2024 (MIT Election Lab)
+ scripts/01-download_data.py                CES 2012-2024 (2012-2020 -> ces_2012_2020.parquet)
+  scripts/01e-download_candidates.py         2026 nominees (Wikipedia infoboxes) + official portraits (Bioguide)
+ scripts/07-race_views.py                   race cards (red-blue bar, portraits) and USA winner map
+ scripts/01d-download_president.py          certified presidential results 2008-2024 (baseline)
+ scripts/01c-download_results.py            certified Senate results 2014-2024 (MIT Election Lab)
  scripts/01b-download_acs.py                ACS 5-year state features (needs CENSUS_API_KEY)
  scripts/05-regression.py                   features, models, metrics, 2026 forecast
  scripts/06-make_figures.py                 5 figures (tile map, bars, model comparison, accuracy, error)
  paper/regression.qmd                       Quarto page on the regression forecast (SOURCE switch)
  docs/                                      rendered site (quarto render paper)
- tests/test_regression.py, test_figures.py unit + simulated end-to-end + real-data tests
+ tests/test_regression.py, test_figures.py, test_results.py, test_race_views.py unit + simulated end-to-end + real-data tests
  data/02-analysis_data/regression_*.parquet real-data outputs (CES features only so far)
  data/00-simulated_data/regression_*.parquet simulated-data outputs
  user_todo.txt / caveats.txt / summary.txt  tracking files (this one included)
 
-Status
- - Every one of the 35 2026 races has D/R/Undecided percentages (sum to 100%) under every
-   training set, on simulated and on real 2022/2024 CES data.
-
- - Pipeline runs end to end on simulated data (--source simulated) and on the real
-   2022/2024 CES.
- - Real-data results so far (CES features only; targets are CES intent): Dem-share
-   MAE about 4.6-5.7 pp vs 7-10 pp for a mean baseline; winner accuracy 82-94%.
-   
- - CES 2016-2024 now downloaded; the real regression runs on all five cycles (CES
-   features only). Real-data leave-one-cycle-out error for the 'midterms' set is
-   WORSE than the baseline (10.2 vs 9.6 pp Dem MAE); 'all' and '2022+2024' beat it.
- - Real validation vs certified results (CES features only, Dem two-party share):
-   MAE 4.7-5.9 pp, winner correct 83-88% for 2022, 2024, 2022+2024 and 'all' models
-   (leave-one-state-out); out-of-cycle error is larger (5.4-8.2 pp).
- - ACS downloaded. Adding ACS features does not improve accuracy on real data (about
-   equal or slightly worse than CES-only); CES-only is the recommended primary set.
- - Real-data figures: paper/figures/real_*.png. The Quarto page now runs on real data.
+Status (real data, CES 2012-2024, ACS, certified Senate + presidential results)
+ - Coding decisions: independents who caucus with a party are coded by it (King ME, Sanders VT ->
+   Democrat; Osborn NE does not caucus, stays "other"); special and regular races are treated
+   alike (state-year races with a D and an R candidate are pooled). The CES Senate question
+   already puts King and Sanders in its Democratic slot. This fixed Maine 2018/2024 (previously
+   scored with a near-zero Democratic share) and added Vermont 2018/2024: 191 state-races.
+ - HEADLINE: trains on ALL SIX cycles (2014-2024), by decision. The feature set is chosen by
+   validation (scripts/05 select_model): validation cycles 2018/2020/2022, holdout 2024 never used
+   to choose. Chosen = ces+acs (validation 4.92 pp, 88% winners); on the 2024 holdout 5.6 pp, 88%
+   winners. ces+prior was a near-tie (4.97 pp); on the holdout 'prior' alone was best (2.8 pp).
+ - LEAKAGE AUDIT (paper/regression.qmd): same-year features, ACS vintage, same-cycle information
+   in leave-one-state-out, time-travel schemes, a baseline that saw the held-out state, and a
+   forecast trained on a different feature timing. Fixed or labelled; certified results never fit
+   a model. Same-year features flattered error by about 0.5 pp (5.1 vs 5.6 pp, 'ces', all cycles).
+ - Honest accuracy (lagged features, forward-chaining, all six cycles, Dem two-party vs results):
+   ces 5.6 pp / 89% winners, ces+acs 5.5 / 89%, prior 5.0 / 89%, ces+prior 4.9 / 89%.
+ - SIMPLE BASELINES on identical races (141, 2016-2024): last presidential result 90.8% winners /
+   4.0 pp; party ID + leaners 89.4% / 4.7; ridge prior 89.4% / 5.0; ridge ces & ces+acs 88.7% / 5.3;
+   ridge ces+prior 88.7% / 4.8; last Senate result 87.9% / 5.6; party ID (pid3) 82.3% / 5.7;
+   majority class and mean share 50.4%. The regression does not clearly beat the best baselines;
+   its distinct value is the three-way share forecast including Undecided.
+ - MIDTERM-ONLY MODELS (fit on 2014, 2018, 2022; predict 2026): worse than all-cycle models on the
+   same later midterms (pooled ces+acs 6.3 vs 5.1 pp; ces 6.1 vs 4.9), because they train on only
+   one or two cycles. For 2026 they flip no winners relative to the headline (35 races compared).
+ - DIRECT TWO-PARTY MODEL (additional result): ridge on the logit of the certified Dem two-party share.
+   Forward-chaining, all cycles, lagged: ces 5.1 pp / 90% winners, ces+acs 5.0 / 89%, prior 5.2 / 86%,
+   ces+prior 5.0 / 89% (three-way: 5.6 / 89%, 5.5 / 89%, 5.0 / 89%, 4.9 / 89%). On the 141 common
+   races it is slightly better than three-way for survey-only features and about equal otherwise;
+   still not clearly past the best baseline. For 2026 (ces+acs) it differs from the headline by 1.9
+   points on average and flips 2 races (MI, NC).
+ - CANDIDATE CHARACTERISTICS (race, gender, incumbency) as features: not built; no open dataset covers
+   them (see user_todo.txt). Nominee names/incumbency/portraits are used for display only.
+ - WEBSITE: every one of the 35 races shows nominee names, incumbency, two-party and three-way
+   percentages, a red-blue bar (three cards per line, winner's portrait larger) and a USA map with
+   the predicted winner's surname (blue Dem, red Rep, grey no race).
+ - 2026 forecast (headline ces+acs, all six cycles): 14 Democratic, 21 Republican wins; every race has
+   D/R/Undecided percentages summing to 100% under every feature set and training set.
 
 Run
  uv run scripts/05-regression.py                    (real if present, else simulated)
