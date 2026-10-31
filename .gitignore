@@ -13,6 +13,9 @@ __pycache__/
 /.quarto/
 *_cache/
 *_files/
+# ...but the rendered site in docs/ needs its figure folders (docs/index_files/figure-html/*.png)
+!docs/*_files/
+!docs/*_files/**
 
 # OS
 .DS_Store
